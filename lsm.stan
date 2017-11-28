@@ -22,7 +22,6 @@ model {
     alpha ~ normal(0, sigma_alpha);
 
     // latent variables
-    // z[1] <- mu_z // NO variance on the first one, easier for identification?
     z[1] ~ multi_normal(mu_z, sigma_fixed);
     for(i in 2:N) {
         z[i] ~ multi_normal(mu_z, sigma_z);

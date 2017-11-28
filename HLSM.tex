@@ -8,6 +8,8 @@
 \usepackage{epstopdf}
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
+\usepackage{amsmath}
+
 \title{Hierarchical Latent Space Models}
 %\author{}
 %\date{}                                           % Activate to display a given date or no date
@@ -60,6 +62,17 @@ Last, but also substantially, the model very naturally admits a valuable process
 
 \section{Fitting the Proposed Model}
 %NO idea, fuck. K then. So -- it's important to actually think about now then, though. So ... also tell them soon. 
+\subsection{The Optimization Problem}
+%The optimization problem has a slightly different from from any we have studied so far -- it is a group-lasso, but with equality constraints.
+The optimization problem can be written as
+
+\begin{align*}
+\min_{z,b} &\sum_{ij} r_{ij}^2 + \lambda \sum_k \|\epsilon_k\|_2\\
+%& \:\:\: \text{ s.t. } z_{ik} = b_i + \epsilon_{ik}
+\end{align*}
+
+where $r_{ij} = e_{ijk} - \sigma(\alpha_k - d_{ijk})$ are the residuals of the edge predictions, and $d_{ijk} = \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2_2$ are the distances between nodes $i$ and $j$ in graph layer $k$. The vectors $\epsilon_k$ encode the layer-wise deviations from the base positions, so that a group penalty on $\epsilon_k$ essentially forces the layer $k$ to be expressed only in terms of the base positions $b$. This is the penalty that produces layer-wise dimensionality reduction.
+
 \subsection{Stan}
 The proposed model can be easily expressed in the Bayesian modeling language Stan, the modern replacement to the widely-used language BUGS. However, testing the model requires a substantial amount of both work, and time, given how slow the models are to fit. In addition, a theoretical understanding of the model is not very developed at this point, and this development is expected to lead to many insights that would greatly improve the speed of fitting at the very least, as well as potentially many other issues. Stan is thus the starting point and valuable proof of concept, but the optimization techniques learned in the class are expected to take this proof of concept and turn it into a far more practical and reliable analytic tool. 
 
