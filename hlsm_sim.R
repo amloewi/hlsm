@@ -108,24 +108,32 @@ fit <- stan(file="hlsm.stan",
             #iter=5e3,
             verbose=T)
 save(fit, file="hlsm_sim_fit.Rdata")
-# HOW THE FUCK DO I EXTRACT THINGS FROM STANFIT
-zhat <- summary(fit)$summary[,"mean"]
+zhat.table <- summary(fit)$summary[,"mean", drop=F]
 
 ################################
 # EXAMINE THE ESTIMATED VALUES #
 ################################
-# Oh yeah, gotta -- coax 'em back into place. I had code for that ... 
 
-a.hat <- s[1]
-s <- s[2:(length(s)-1)] # cut off 'alpha' AND 'lp__'
-x.hat <- s[c(T,F)]
-y.hat <- s[c(F,T)]
-z.hat <- cbind(x.hat, y.hat)
-plot(y.hat ~ x.hat, z.hat, # z[,2] ~ z[,1], #
-     col=c(rep('blue', 9), rep('red', 10), rep('green', 10)))
-plot(z[,2] ~ z[,1], #
-     col=c(rep('blue', 9), rep('red', 10), rep('green', 10)))
+unpack.hlsm.fit <- function(fit, N, K){
+    s <- summary(fit)$summary[,"mean"]
+    params <- t(array(s, dim=c(K, 1+N+N*K))) # => one k-dim'nl param per line, CUTS lp__
+    return(list(alpha=params[1,],
+                b=params[2:(N+1),],
+                # => z[N,K,2], i.e. nodes, layers, x/y coords.
+                z=aperm(array(params[(N+2):(1+N+N*2),], # This is UGLY, but works
+                              dim=c(K,N,2)),
+                        c(2,1,3)))) 
+}
 
+zhat <- unpack.hlsm.fit(fit, N, K)
+
+# And finally, plot to check
+# out <- positions.to.matrix(zhat$z
+# plot(graph_from_adjacency_matrix(out))
+
+
+# Need a classification accuracy -- what's the confusion matrix of estimated edges?
+# Since they are labeled, that's a straight-forward question.
 
 
 # 1) I want to plot the results (draw network)
