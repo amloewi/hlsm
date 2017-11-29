@@ -1,0 +1,24 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+%\usepackage{subcaption}
+\usepackage{subfig}
+\usepackage{geometry}
+\usepackage{quoting}
+
+\begin{document}
+\title{A Matching Analysis\\of the Call Data}
+\author{Martin Loewi}
+\maketitle
+
+% echo=F and include=F ... library(xtable)
+
+<< include=FALSE >>=
+    # Set up options for knitting code, without including any output at all in the knitted file
+    library(knitr)
+opts_chunk$set(size="small", cache=T, autodep=TRUE)
+# That is, don't run chunks if nothing has changed, and automatically keep track of dependencies between chunks
+@
+    
+    
+\end{document}
