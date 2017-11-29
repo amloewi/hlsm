@@ -128,18 +128,32 @@ unpack.hlsm.fit <- function(fit, N, K){
 zhat <- unpack.hlsm.fit(fit, N, K)
 
 # And finally, plot to check
-# out <- positions.to.matrix(zhat$z
-# plot(graph_from_adjacency_matrix(out))
+k <- 1
+ghat.1 <- positions.to.matrix(1, zhat$z[,1,])
+ghat.2 <- positions.to.matrix(1, zhat$z[,2,])
+ghat.b <- positions.to.matrix(1, zhat$b)
+
+plot(graph_from_adjacency_matrix(out)) # it's -- a big fat ball. Okay both are.
+# WAIT -- interesting -- if I just MAKE alpha=1, I get ~ the right answer
+# (if, remember, I also initialized it that way. Wait did I?)
+plot(graph_from_adjacency_matrix(positions.to.matrix(1, b)))
+
+# ~Classification accuracies
+table(as.vector(ghat.1), as.vector(edges[,,1])) # NOT TERRIBLE!
+table(as.vector(ghat.2), as.vector(edges[,,2])) # NOT TERRIBLE! ALSO!
+table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=1))) # Seriously not bad
+# Now try tuning with alpha, maybe? And why was it so high?
+# Also, try with initialization values that aren't cheating.
 
 
-# Need a classification accuracy -- what's the confusion matrix of estimated edges?
-# Since they are labeled, that's a straight-forward question.
-
-
-# 1) I want to plot the results (draw network)
-# 2) Need to do with TEST data (simple example)
-# 3) Classification accuracy sort of thing, pairs
-#       accurately represented, or not
+out <- array(dim=20)
+vals <- seq(0, 5, length=20)
+for(i in 1:20){
+    cm <- table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=vals[i]))) 
+    out[i] <- sum(diag(cm))/sum(cm)
+}
+plot(out, xaxt="n")
+axis(1, at=1:20, labels=round(vals,2)) # Okay so yes, peaks around 1; why estimate=20?
 
 
 
