@@ -31,7 +31,7 @@ model {
         alpha[k] ~ normal(0, sigma_alpha);
     }
 
-    // prior on the base positions -- IS IT? WILL THIS FREEZE IT?
+    // prior on the base positions
     for(i in 1:N){
         b[i] ~ multi_normal(mu_b, sigma_b); # XXX
     }
@@ -47,12 +47,11 @@ model {
         }
     }
 
+    # Fitting the parameters to the edges
     for(i in 1:N){
         for(j in 1:N){
             for(k in 1:K){
-                // pow required a real and this is easy, if messy
-                // d = (pow(z[i,k,1]-z[j,k,1],2) + pow(z[i,k,2]-z[j,k,2],2));
-                d = dot_self(z[i,k] - z[j,k]); // same, faster, cleaner
+                d = dot_self(z[i,k] - z[j,k]);
                 edges[i,j,k] ~ bernoulli_logit(alpha[k] - d);
             }
         }

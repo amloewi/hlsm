@@ -20,5 +20,6 @@ opts_chunk$set(size="small", cache=T, autodep=TRUE)
 # That is, don't run chunks if nothing has changed, and automatically keep track of dependencies between chunks
 @
     
+
     
 \end{document}

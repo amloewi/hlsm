@@ -19,8 +19,11 @@ stretch <- function(x, m, dim="x"){
 
 # Looks good
 plot(b, xlim=c(-2,2), ylim=c(-2,2))
-points(stretch(b, 2))
-points(stretch(b, 2, dim="y"))
+points(stretch(b, 2), col="red")
+points(stretch(b, 2, dim="y"), col="blue")
+lsm.plot(1, b, add=T)
+lsm.plot(1, stretch(b, 2), add=T, col="blue")
+lsm.plot(1, stretch(b, 2, dim="y"), add=T, col="red")
 
 
 logit <- function(x) 1/(1+exp(-x))
@@ -101,14 +104,18 @@ library(rstan)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
 
-fit <- stan(file="hlsm.stan",
+fit.20k <- stan(file="hlsm.stan",
             model_name="hlsm_sim",
             data=hlsm.data,
             init=hlsm.init,
-            #iter=5e3,
-            verbose=T)
-save(fit, file="hlsm_sim_fit.Rdata")
-zhat.table <- summary(fit)$summary[,"mean", drop=F]
+            iter=2e4,
+            verbose=T,
+            control=list(max_treedepth = 15)) # from 10, as suggested
+# 2k was lousy, 5k better-looking (complete eyeball of the traceplot) 20k -- LOOKS ok
+# fit.2k <- fit
+# fit <- fit.20k
+# save(fit, file="hlsm_sim_fit_20k.Rdata")
+# zhat.table <- summary(fit)$summary[,"mean", drop=F]
 
 ################################
 # EXAMINE THE ESTIMATED VALUES #
@@ -128,17 +135,17 @@ unpack.hlsm.fit <- function(fit, N, K){
 zhat <- unpack.hlsm.fit(fit, N, K)
 
 # And finally, plot to check
-k <- 1
-ghat.1 <- positions.to.matrix(1, zhat$z[,1,])
-ghat.2 <- positions.to.matrix(1, zhat$z[,2,])
-ghat.b <- positions.to.matrix(1, zhat$b)
+ghat.1 <- positions.to.matrix(.01, zhat$z[,1,])
+ghat.2 <- positions.to.matrix(.01, zhat$z[,2,])
+ghat.b <- positions.to.matrix(.01, zhat$b)
 
-plot(graph_from_adjacency_matrix(out)) # it's -- a big fat ball. Okay both are.
+# plot(graph_from_adjacency_matrix(out)) # it's -- a big fat ball. Okay both are.
 # WAIT -- interesting -- if I just MAKE alpha=1, I get ~ the right answer
 # (if, remember, I also initialized it that way. Wait did I?)
 plot(graph_from_adjacency_matrix(positions.to.matrix(1, b)))
 
 # ~Classification accuracies
+# What happened to 'edges'? It's not a table anymore
 table(as.vector(ghat.1), as.vector(edges[,,1])) # NOT TERRIBLE!
 table(as.vector(ghat.2), as.vector(edges[,,2])) # NOT TERRIBLE! ALSO!
 table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=1))) # Seriously not bad
@@ -154,6 +161,33 @@ for(i in 1:20){
 }
 plot(out, xaxt="n")
 axis(1, at=1:20, labels=round(vals,2)) # Okay so yes, peaks around 1; why estimate=20?
+
+
+# Takes the parameters for an lsm, lays out a network as specified
+# WOULD LIKE TO HAVE A FEATURE WHERE -- black lines for actual, red for mistaken edges
+lsm.plot <- function(alpha, z, add=F, col="black"){
+    edges <- positions.to.matrix(alpha, z)==1 # => logical
+    if(add){
+        points(z, col=col)
+    } else {
+        plot(z, col=col)
+    }
+    N <- nrow(z)
+    for(i in 1:N){
+        for(j in 1:N){
+            if(edges[i,j]){
+                lines(z[c(i,j),1], z[c(i,j),2], col=col)
+            }
+        }
+    }
+}
+
+
+lsm.plot(1, b)
+plot(b, xlim=c(-.5,.5), ylim=c(-.5,.5))
+lsm.plot(.02, zhat$b,      add=T)
+lsm.plot(.02, zhat$z[,1,], add=T, col="red") # .01 => disconnected
+lsm.plot(.02, zhat$z[,2,], add=T, col="blue")
 
 
 
