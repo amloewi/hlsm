@@ -53,6 +53,9 @@ model {
             for(k in 1:K){
                 d = dot_self(z[i,k] - z[j,k]);
                 edges[i,j,k] ~ bernoulli_logit(alpha[k] - d);
+
+                #    y[n] ~ categorical(softmax(beta * x[n]));
+
             }
         }
     }

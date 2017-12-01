@@ -1,9 +1,9 @@
 # This is where hlsm.stan is
 setwd("~/Documents/Research/hlsm")
 
-########################
-# GENERATING HLSM DATA #
-########################
+######################################
+# FUNCTIONS FOR GENERATING HLSM DATA #
+######################################
 N <- 20
 K <- 2
 circle <- seq(0,2*pi,length=N)
@@ -11,19 +11,36 @@ b <- cbind(cos(circle), sin(circle))
 
 # Linearly scales a set of data points by the scalar 'm', along the axis 'dim'(="x"/"y")
 stretch <- function(x, m, dim="x"){
-    stopifnot(dim=="x" | dim=="y")
-    if(dim=="x") M <- matrix(c(m, 0, 0, 1), nrow=2)
-    if(dim=="y") M <- matrix(c(1, 0, 0, m), nrow=2)
+    stopifnot(any(c("x", "y") %in% dim))
+    M <- matrix(c(1, 0, 0, 1), nrow=2)
+    if("x" %in% dim) M[1,1] <- m
+    if("y" %in% dim) M[2,2] <- m
     return(x %*% M)
 }
 
 # Looks good
 plot(b, xlim=c(-2,2), ylim=c(-2,2))
-points(stretch(b, 2), col="red")
+points(stretch(b, 2, dim=c("x", "y")), col="red")
 points(stretch(b, 2, dim="y"), col="blue")
-lsm.plot(1, b, add=T)
-lsm.plot(1, stretch(b, 2), add=T, col="blue")
-lsm.plot(1, stretch(b, 2, dim="y"), add=T, col="red")
+plot.lsm(1, b, add=T)
+plot.lsm(1, stretch(b, 2), add=T, col="blue")
+plot.lsm(1, stretch(b, 2, dim="y"), add=T, col="red")
+plot.lsm(1, rotate.45(stretch(b, 2, dim="y")), add=T, col="green")
+
+
+
+# Closure. Takes an angle (in radians) and returns a function that rotates by that angle.
+rotation.matrix <- function(theta){
+    R <- array(c(cos(theta),  sin(theta),
+                 -sin(theta), cos(theta)), dim=c(2,2))
+    return(function(x){x%*%R})
+}
+rotate.45 <- rotation.matrix(pi/4)
+rotate.90 <- rotation.matrix(pi/2)
+
+plot(rotate.45(z)) # Yup!
+plot(z, ylim=c(-5,5))
+points(rotate.90(z))
 
 
 logit <- function(x) 1/(1+exp(-x))
@@ -43,26 +60,58 @@ positions.to.matrix <- function(a, z){
     return(M)
 }
 
+# 
+positions.to.multigraph <- function(Z, alpha=1){
+    N <- nrow(Z[[1]])
+    K <- length(Z)
+    edges <- array(dim=c(N,N,K))
+    for(i in 1:K){
+        edges[,,i] <- positions.to.matrix(Z[[i]], a=alpha)
+    }
+    return(edges)
+}
 
-library(igraph)
-out <- positions.to.matrix(stretch(b, 3), a=1) # moderate clustering at 2, serious at 3
-plot(graph_from_adjacency_matrix(out)) # sure, not bad
+
+
 
 ############
 # THE DATA #
 ############
-# Two ovals of data, at 90 degrees to one another. Hope to infer a circle of base positions
-edges <- array(dim=c(N,N,K))
 
-# How do you stack 2d structures? ALONG=3 (below)
-# https://stackoverflow.com/questions/14857358/stacking-array-slices-rbind-for-2-dimensions
-library(abind)
-# Again, this isn't ... fuckin, exactly like the DGP, is it. Fuckin' ... 
-positions <- abind(stretch(b, 3, dim="x"),
-                   stretch(b, 3, dim="y"), along = 3)
-for(i in 1:2){
-    edges[,,i] <- positions.to.matrix(positions[,,i], a=1)
-}
+# library(igraph)
+# out <- positions.to.matrix(stretch(b, 3), a=1) # moderate clustering at 2, serious at 3
+# plot(graph_from_adjacency_matrix(out)) # sure, not bad
+
+two.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
+                                          stretch(b, 2, dim="y")))
+#plot.multigraph(two.ovals) # ah, no -- fuck, ovals are a GRAPH, this takes
+#plot(graph_from_adjacency_matrix(two.ovals[,,2])) # There we go. Looks ok.
+
+three.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
+                                            stretch(b, 2, dim="y"),
+                                            rotate.45(stretch(b, 2, dim="y"))))
+
+two.circles <- positions.to.multigraph(list(stretch(b, 2, dim=c("x", "y")),
+                                            b))
+
+# For the L1 test -- lambda?
+two.overlapping.circles   <- positions.to.multigraph(list(b, b))
+three.overlapping.circles <- positions.to.multigraph(list(b, b, b))
+
+
+# ALL THIS WAS A GOOD FIRST TEST, BUT I DON'T NEED IT NOW -- 
+# # Two ovals of data, at 90 degrees to one another. Hope to infer a circle of base positions
+# edges <- array(dim=c(N,N,K))
+# 
+# # How do you stack 2d structures? ALONG=3 (below)
+# # https://stackoverflow.com/questions/14857358/stacking-array-slices-rbind-for-2-dimensions
+# library(abind)
+# # Again, this isn't ... fuckin, exactly like the DGP, is it. Fuckin' ... 
+# positions <- abind(stretch(b, 3, dim="x"),
+#                    stretch(b, 3, dim="y"), along = 3)
+# for(i in 1:2){
+#     edges[,,i] <- positions.to.matrix(positions[,,i], a=1)
+# }
 
 
 
@@ -165,7 +214,7 @@ axis(1, at=1:20, labels=round(vals,2)) # Okay so yes, peaks around 1; why estima
 
 # Takes the parameters for an lsm, lays out a network as specified
 # WOULD LIKE TO HAVE A FEATURE WHERE -- black lines for actual, red for mistaken edges
-lsm.plot <- function(alpha, z, add=F, col="black"){
+plot.lsm <- function(alpha, z, add=F, col="black"){
     edges <- positions.to.matrix(alpha, z)==1 # => logical
     if(add){
         points(z, col=col)
@@ -182,12 +231,20 @@ lsm.plot <- function(alpha, z, add=F, col="black"){
     }
 }
 
+plot.multigraph <- function(Z, alpha=1){
+    plot.lsm(alpha, Z[,1,], add=F, col=1) # WATCH THE INDEXING HERE -- DID I CHANGE THIS?
+    for(i in 2:dim(Z)[3]){
+        plot.lsm(1, Z[,2,], add=T, col=i)
+    }
+}
 
-lsm.plot(1, b)
+plot.multigraph(zhat$z, alpha=.02)
+
+plot.lsm(1, b)
 plot(b, xlim=c(-.5,.5), ylim=c(-.5,.5))
-lsm.plot(.02, zhat$b,      add=T)
-lsm.plot(.02, zhat$z[,1,], add=T, col="red") # .01 => disconnected
-lsm.plot(.02, zhat$z[,2,], add=T, col="blue")
+plot.lsm(.02, zhat$b,      add=T)
+plot.lsm(.02, zhat$z[,1,], add=T, col="red") # .01 => disconnected
+plot.lsm(.02, zhat$z[,2,], add=T, col="blue")
 
 
 
@@ -208,18 +265,6 @@ y <- mvrnorm(10, mu=c(3,0),  Sigma=array(c(.1,0,0,.1), dim=c(2,2)))
 z <- rbind(w,x,y)
 plot(z)
 
-# Closure. Takes an angle (in radians) and returns a function that rotates by that angle.
-rotation.matrix <- function(theta){
-    R <- array(c(cos(theta),  sin(theta),
-                 -sin(theta), cos(theta)), dim=c(2,2))
-    return(function(x){x%*%R})
-}
-rotate.45 <- rotation.matrix(pi/4)
-rotate.90 <- rotation.matrix(pi/2)
-
-plot(rotate.45(z)) # Yup!
-plot(z, ylim=c(-5,5))
-points(rotate.90(z))
 
 #####################################
 # Finding a good starting point 0.1 #
