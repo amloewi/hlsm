@@ -185,17 +185,19 @@ plot.multigraph <- function(Z, alpha=1){
     }
 }
 
-plot.model <- function(m, alpha=NULL){
+plot.model <- function(m, alpha=NULL, xlim=NULL, ylim=NULL){
     z <- m$theta$z
     b <- m$theta$b
     if(is.null(alpha))
         alpha <- m$theta$alpha
     # First, make sure the plot is big enough
-    xlim <- range(c(z[,,1], b[,1]))
-    ylim <- range(c(z[,,2], b[,2]))
+    if(is.null(xlim))
+        xlim <- range(c(z[,,1], b[,1]))
+    if(is.null(ylim))
+        ylim <- range(c(z[,,2], b[,2]))
     
     plot.lsm(alpha[1], z[,1,], add=F, col=1, xlim=xlim, ylim=ylim)
-    for(i in 2:dim(z)[3]){
+    for(i in 2:dim(z)[2]){
         plot.lsm(alpha[i], z[,i,], add=T, col=i)
     }
 }
@@ -260,8 +262,8 @@ plot.model(two.ovals.model)
 three.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
                                             stretch(b, 2, dim="y"),
                                             rotate.45(stretch(b, 2, dim="y"))))
-three.ovals.model <- one.shot(three.ovals, sigma, "hlsm.stan", "three_ovals", niter)
-plot.model(three.ovals.model) # oh VERY interesting -- what the hell?
+three.ovals.model <- one.shot(three.ovals, sigma, "hlsm.stan", "three_ovals", 2e4)
+plot.model(three.ovals.model, alpha=c(.10, .10, .10), xlim=c(-1,1), ylim=c(-1,1)) # oh VERY interesting -- what the hell?
 
 
 # TWO CONCENTRIC CIRCLES
