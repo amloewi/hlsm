@@ -6,8 +6,9 @@ data {
     real<lower=0> sigma_alpha; // alpha is the layer intercept
     vector[2] mu_b; // prior mean for the base positions
     matrix<lower=0>[2,2] sigma_b;     // variance of the base positions -- number?
-    matrix<lower=0>[2,2] sigma_z[K];     // variance of the layer positions FROM b;
+    //matrix<lower=0>[2,2] sigma_z[K];     // variance of the layer positions FROM b;
                                   // should be K so that you can penalize LAYERS
+    vector<lower=0>[2] sigma_z_vector[K];
 }
 
 parameters {
@@ -39,11 +40,11 @@ model {
     // priors on the layer positions
     for (i in 1:N) {
         for (k in 1:K) {
-            z[i,k] ~ multi_normal(b[i], sigma_z[k]);
+            // z[i,k] ~ multi_normal(b[i], sigma_z[k]);
             // a laplacian prior is like a lasso on the variances, meaning
             // this could zero out a whole LAYER (model a layer as simply
             // being equal to the base positions)
-            // z[i,k] ~ double_exponential(b[i], sigma_z_vector[k]);
+            z[i,k] ~ double_exponential(b[i], sigma_z_vector[k]);
         }
     }
 
