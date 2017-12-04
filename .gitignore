@@ -54,7 +54,7 @@ Icon?
 
 # TEXSHOP output file    #
 ##########################
-*.pdf
+# *.pdf
 
 
 # RTF and WORD versions #
