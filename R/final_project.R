@@ -55,10 +55,8 @@ objective.function <- function(b, epsilon, y) {
   #     epsilon: numeric array of dimension (n vs k)
   #     y: numeric array of dimension (n vs n vs k)
   
-  out <- (1-y)
+  out <- (1-y) * compute.eta(b, epsilon) - log(1 + exp(compute.eta(b, epsilon)))
+  out <- sum(out)
   
-  
-  
-  
-  
+  return(out)
 }
