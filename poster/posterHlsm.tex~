@@ -1,0 +1,316 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Jacobs Landscape Poster
+% LaTeX Template
+% Version 1.1 (14/06/14)
+%
+% Created by:
+% Computational Physics and Biophysics Group, Jacobs University
+% https://teamwork.jacobs-university.de:8443/confluence/display/CoPandBiG/LaTeX+Poster
+%
+% Further modified by:
+% Nathaniel Johnston (nathaniel@njohnston.ca)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[final]{beamer}
+
+\usepackage[scale=1.24]{beamerposter} % Use the beamerposter package for laying out the poster
+
+\usetheme{confposter} % Use the confposter theme supplied with this template
+
+\setbeamercolor{block title}{fg=cmuRed,bg=white} % Colors of the block titles
+\setbeamercolor{block body}{fg=black,bg=white} % Colors of the body of blocks
+\setbeamercolor{block alerted title}{fg=white,bg=dblue!70} % Colors of the highlighted block titles
+\setbeamercolor{block alerted body}{fg=black,bg=dblue!10} % Colors of the body of highlighted blocks
+% Many more colors are available for use in beamerthemeconfposter.sty
+
+%-----------------------------------------------------------
+% Define the column widths and overall poster size
+% To set effective sepwid, onecolwid and twocolwid values, first choose how many columns you want and how much separation you want between columns
+% In this template, the separation width chosen is 0.024 of the paper width and a 4-column layout
+% onecolwid should therefore be (1-(# of columns+1)*sepwid)/# of columns e.g. (1-(4+1)*0.024)/4 = 0.22
+% Set twocolwid to be (2*onecolwid)+sepwid = 0.464
+% Set threecolwid to be (3*onecolwid)+2*sepwid = 0.708
+
+\newlength{\sepwid}
+\newlength{\onecolwid}
+\newlength{\twocolwid}
+\newlength{\threecolwid}
+\setlength{\paperwidth}{60in} % A0 width: 46.8in
+\setlength{\paperheight}{30in} % A0 height: 33.1in
+\setlength{\sepwid}{0.01\paperwidth} % Separation width (white space) between columns
+\setlength{\onecolwid}{0.31\paperwidth} % Width of one column
+\setlength{\twocolwid}{0.34\paperwidth} % Width of two columns
+\setlength{\threecolwid}{0.31\paperwidth} % Width of three columns
+\setlength{\topmargin}{-0.5in} % Reduce the top margin size
+%-----------------------------------------------------------
+
+\usepackage{graphicx}  % Required for including images
+
+\usepackage{booktabs} % Top and bottom rules for tables
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\title{A Graphical Approach to Interpretable Modeling of Stress and Adverse Pregnancy Outcomes} % Poster title
+
+\author{Octavio Mesner, MS\textsuperscript{1,2}; Alexander Davis, Ph.D\textsuperscript{1};
+  Elizabeth Casman, Ph.D\textsuperscript{1};
+  Hyagriv Simhan, MD\textsuperscript{3}; Cosma Shalizi,
+  Ph.D\textsuperscript{2};
+  Tamar Krishnamurti, Ph.D\textsuperscript{4}} % Author(s)
+
+\institute{\textsuperscript{1}Department of Engineering \& Public Policy,
+  %Carnegie Mellon University;
+  \textsuperscript{2}Department of Statistics \& Data Science,
+  Carnegie Mellon University;
+  \textsuperscript{3}Magee-Women's Research Institute;
+  \textsuperscript{4}Division of Internal Medicine, University of Pittsburgh
+} % Institution(s)
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+\addtobeamertemplate{block end}{}{\vspace*{2ex}} % White space under blocks
+\addtobeamertemplate{block alerted end}{}{\vspace*{2ex}} % White space under highlighted (alert) blocks
+
+\setlength{\belowcaptionskip}{2ex} % White space under figures
+\setlength\belowdisplayshortskip{2ex} % White space under equations
+
+\begin{frame}[t] % The whole poster is enclosed in one beamer frame
+
+\begin{columns}[t] % The whole poster consists of three major columns, the second of which is split into two columns twice - the [t] option aligns each column's content to the top
+
+\begin{column}{\sepwid}\end{column} % Empty spacer column
+
+\begin{column}{\onecolwid} % The first column
+
+%----------------------------------------------------------------------------------------
+%	OBJECTIVES
+%----------------------------------------------------------------------------------------
+
+%  \begin{alertblock}{Key Points}
+%    \begin{itemize}
+%    \item Determine the underlying association structure
+%    \item
+%    \item
+%    \item
+%    \end{itemize}
+%
+%\end{alertblock}
+%
+%----------------------------------------------------------------------------------------
+%	INTRODUCTION
+%----------------------------------------------------------------------------------------
+
+\begin{block}{Introduction}
+
+\textbf{Problem:} The biological and psychosocial pathways leading to
+preterm birth
+(PTB) and other adverse pregnancy outcomes (APOs) are complex and only
+partially understood.
+It is widely believed that stress contributes
+to APOs including PTB, and while there are theories about the pathways
+underlying this association, the evidence from observational studies
+is mixed.\\
+\textbf{Standard Approach:} Regression is limited in the number of
+covariates it can handle at once.  Controlling for variables in a
+causal chain, regression will only flag the last.\\
+
+\textbf{Our Approach:}  We estimate the underlying association
+structure between variables with a graphical model.
+
+\end{block}
+
+\begin{block}{Measure of Maternal Stress (MOMS) Study}
+  \begin{itemize}
+  \item 744 pregnant women were recruited from four large
+    U.S. hospitals between 2013 and 2015
+  \item Examined at 12-21 and 32-36 weeks gestation, post-delivery
+    medical records
+  \item Collected stressful life events scale (SLES), stress
+    biomarkers, adverse pregnancy outcomes, psychosocial enhancers and
+    buffers, maternal medical history, demographics, inflammatory
+    biomarkers, and self-reported trauma
+  \item Mean age (IQR): 29 (25, 33) years, 17\% Black, 20\% Latina,
+    58\% White, 5\% Other
+  \item 8\% Preterm, 5\% Preeclampsia, 11\% Gestational
+    Hypertension, 8\% Gestational Diabetes
+  \end{itemize}
+\end{block}
+
+\begin{block}{PC Algorithm}
+  \begin{enumerate}
+  \item Build complete graph (every node connected to every other
+    node)
+  \item Test all marginal associations.  Remove edge when
+    not significant
+  \item Test remaining edges conditioning on 1 variable.
+    Remove edge when not significant
+  \item Repeat previous step each time conditioning on $k+1$ variables
+  \end{enumerate}
+\end{block}
+
+\begin{block}{Kernel Conditional Independence (KCI) Test}
+  \begin{itemize}
+  \item Relies on mathematical structure of reproducing kernel Hilbert
+    spaces
+  \item Robust test for statistical independence, not simply
+    correlation
+  \item Speed up: our analysis uses KCI when correlation is not significant
+  \end{itemize}
+\end{block}
+
+%------------------------------------------------
+
+%----------------------------------------------------------------------------------------
+
+\end{column} % End of the first column
+
+\begin{column}{\sepwid}\end{column} % Empty spacer column
+
+\begin{column}{\twocolwid} % Begin a column which is two columns wide (column 2)
+
+
+
+  \begin{figure}
+    \includegraphics[width=\linewidth]{Figure3+.pdf}
+    \caption{The figure above is the result of superimposing two
+      graphs: one using $\alpha = 0.01$ and the other using $\alpha =
+      0.05$.  The solid lines represent the connections found in both
+      while the dashed line were only in the $\alpha = 0.05$ graph.}
+  \end{figure}
+
+
+
+\end{column} % End of the second column
+
+\begin{column}{\sepwid}\end{column} % Empty spacer column
+
+\begin{column}{\onecolwid} % The third column
+
+\begin{block}{Clustering}
+
+  \begin{itemize}
+  \item Roughly, six clusters from the eight categories of variables
+  \item High degree of connections within cluster, low degree
+    between cluster
+  \item Inflammation only connected with demographics and outcomes,
+    not questionnaire-evaluated stress
+  \item Few connections between trauma, psycho-social
+    enhancers/buffers
+  \end{itemize}
+
+\end{block}
+
+%----------------------------------------------------------------------------------------
+%	ADDITIONAL INFORMATION
+%----------------------------------------------------------------------------------------
+
+\begin{block}{Paths to Adverse Pregnancy Outcomes}
+
+ \textbf{Weeks gestation:} average time-adjusted CRH, hair cortisol at
+  12-21 weeks, Objective SLES prepregnancy\\
+ \textbf{Preeclampsia:} CRH, hair cortisol and objective SLES\\
+ \textbf{Gestational hypertension:} preeclampsia and gestational weeks\\
+ \textbf{Gestational diabetes:} racial discrimination and weeks of gestation
+
+\end{block}
+
+
+%----------------------------------------------------------------------------------------
+%	CONCLUSION
+%----------------------------------------------------------------------------------------
+
+\begin{block}{Conclusion}
+
+This approach can illustrate the underlying causal
+structure of a complex clinical landscape.
+It offers an
+alternative to regression when the underlying causal mechanisms of a
+dataset are not already known.
+Probabilistic graphical models should be used to generate
+hypotheses and design studies aimed at quantifying associations to
+improve understanding of effective interventions.
+This stands as a contrast to other machine learning methods and
+algorithms where a computer program uses large amounts of information
+to make a prediction
+on outcomes, but discerning how and why are difficult.
+
+
+\end{block}
+
+
+%----------------------------------------------------------------------------------------
+%	REFERENCES
+%----------------------------------------------------------------------------------------
+
+% \begin{block}{References}
+
+% \nocite{*} % Insert publications even if they are not cited in the poster
+% \small{\bibliographystyle{unsrt}
+% \bibliography{sample}\vspace{0.75in}}
+
+% \end{block}
+
+%----------------------------------------------------------------------------------------
+%	ACKNOWLEDGEMENTS
+%----------------------------------------------------------------------------------------
+
+%\setbeamercolor{block title}{fg=red,bg=white} % Change the block title color
+
+\begin{block}{Acknowledgements}
+
+  \small{\rmfamily{
+      We would like to thank the study team and participants from MOMS
+      for sharing their data for this analysis. Without them, this
+      work would not be possible. This work was partially funded by
+      grants from the Hillman Foundation and the Richard King Mellon
+      Foundation.}} \\
+
+\end{block}
+
+%----------------------------------------------------------------------------------------
+%	CONTACT INFORMATION
+%----------------------------------------------------------------------------------------
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+%\setbeamercolor{block alerted title}{fg=black,bg=norange} % Change the alert block title colors
+%\setbeamercolor{block alerted body}{fg=black,bg=white} % Change the alert block body colors
+
+\begin{block}{Contact Information}
+
+\textbf{Corresponding author:} Octavio Mesner\\
+\textbf{Email:} \href{mailto:omesner@cmu.edu}{\texttt{omesner@cmu.edu}}\\
+\textbf{Address:} 129 Baker Hall, Pittsburgh, PA 15213
+
+\end{block}
+
+  \end{column}
+  \begin{column}{0.35\linewidth}
+    \includegraphics[width=.8\linewidth]{CMU_Logo_Stack_Red.eps}
+  \end{column}
+\end{columns}
+
+%----------------------------------------------------------------------------------------
+
+\end{column} % End of the third column
+
+\end{columns} % End of all the columns in the poster
+
+\end{frame} % End of the enclosing frame
+
+\end{document}
