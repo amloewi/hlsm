@@ -86,6 +86,7 @@ Finally, our complete objective function is to minimize the sum between the nega
 \min_{\epsilon, b} \sum_k \sum_{i,j} [ (y_{ijk} - 1)\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \sum_i \| \epsilon_{i,k}\|
 \end{align*}
 
+where $\|.\|$ represents the L2 norm. Since this is not differentiable, we could use proximal gradient descent. If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
 
 
 \end{document}  
