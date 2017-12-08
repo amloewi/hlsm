@@ -32,7 +32,12 @@ rotation.matrix <- function(theta){
                  -sin(theta), cos(theta)), dim=c(2,2))
     return(function(x){x%*%R})
 }
+rotate <- function(x, theta){
+    f <- rotation.matrix(theta)
+    return(f(x))
+}
 rotate.45 <- rotation.matrix(pi/4)
+rotate.60 <- rotation.matrix(pi/3)
 rotate.90 <- rotation.matrix(pi/2)
 
 ####### FUNCTION TESTS #######
@@ -49,14 +54,15 @@ positions.to.matrix <- function(a, z){
     N <- nrow(z)
     d <- as.matrix(dist(z))^2 # The SQUARED euclidean distances, remember ... (right?)
     M <- array(dim=c(N,N))
-    
+    #if(length(a)!=)
     for(i in 1:N){
         for(j in 1:N){
-                M[i,j] <- (logit(a - d[i,j]) > .5)+0
+            M[i,j] <- (logit(a - d[i,j]) > .5)+0
         }
     }
     return(M)
 }
+
 
 # 
 positions.to.multigraph <- function(Z, alpha=1){
@@ -69,6 +75,7 @@ positions.to.multigraph <- function(Z, alpha=1){
     return(edges)
 }
 
+
 # (Functions for ...)
 #################################
 # Finding a good starting point #
@@ -80,20 +87,115 @@ positions.to.multigraph <- function(Z, alpha=1){
 #          b=b)
 # }
 
+library(expm) # has 'sqrtm'
+procrustean <- function(z, z.0){
+    # REQUIRES CENTERING
+    z   <- scale(z, scale=F)
+    z.0 <- scale(z.0, scale=F)
+    Re(z.0 %*% t(z) %*% solve(sqrtm(z %*% t(z.0) %*% z.0 %*% t(z))) %*% z)
+}
+
+# x <- stretch(b, 2)
+# plot.lsm(1, x)
+# y <- stretch(b, 2, dim='y')
+# plot.lsm(1, y, col=2, add=T)
+# procrusted <- procrustean(x, y)
+# plot.lsm(1, procrusted, col=2, add=T) # THERE WE FUCKIN GO
+
+
+graph.accuracy <- function(alpha, edges, z){
+    # REMOVE THIS -- maybe it's fucking with optim?
+#    if(is.null(alpha))
+#        alpha <- 1
+    g.hat <- positions.to.matrix(alpha, z)
+    tbl <- table(as.vector(g.hat), as.vector(edges))
+    # If the table collapses, then somethings's gone wrong. GODDAMMIT 100 AGAIN
+    if(length(dim(tbl))!=2){
+        return(100)
+    } else {
+        return(1-sum(diag(tbl))/sum(tbl))
+    }
+}
+
+find.alpha <- function(g, z){
+    return(optimize(partial(graph.accuracy, edges=g, z=z),
+                            lower=0, upper=5)$minimum)
+} # WORKS WHEN IT'S FIVE -- NOT ABOVE! WHAT THE WORTHLESS FUCK!
+a <- find.alpha(two.ovals[,,1], b)
+1-graph.accuracy(a, two.ovals[,,1], b) # THERE we go (but -- why not perfect? Oh, ovals.)
+plot.lsm(a, b) # what ... 
+
+# # DO IT OUT THE FUCK MANUALLY
+# out <- array(dim=100)
+# v <- seq(0,50,length=100)
+# for(i in 1:100){
+#     out[i] <- graph.accuracy(v[i], two.ovals[,,1], b)
+# }
+# plot(out) # => 0.45. Okay ...
+# optimize(partial(graph.accuracy, edges=two.ovals[,,1], z=b), lower=0, upper=5)$minimum
+# plot.lsm(.45, b) # Okay, so THAT works. Good --
+
+
+
+
+library(purrr)
+# Do a separate lsm for each layer (making sure it)
+# - has the right alpha => optim,
+# - is the right scale for alpha=5
+# THEN procrustean transform them all to match up with the center layer
 find.init <- function(m){
     N <- dim(m)[1]
     K <- dim(m)[3]
     avg <- (apply(m, MARGIN=1:2, sum) > 0) + 0    # init failed with K=3; round=>0?
-    lsm <- ergmm(avg ~ euclidean(d=2)) # Squared?
-    z.hat <- lsm$mcmc.pmode$Z
+    lsm.avg <- ergmm(network(avg) ~ euclidean(d=2)^2) # Squared?
+    z.avg <- lsm.avg$mcmc.mle$Z # .pmode v .mle? # 92 EDGES? 
+    a.avg <- summary(lsm.avg)$pmean$coef.table[1]$Estimate # jesus christ, latentnet
+    # I should at least see if this matches with the -- optimal one.
+    # Oh but, I'll need a new one anyway, if I -- re-scale.
+        
+    z <- array(dim=c(N,K,2))    
+    for(k in 1:K){
+        lsm.k <- ergmm(network(m[,,1]) ~ euclidean(d=2)^2)
+        z.k <- lsm.k$mcmc.mle$Z # pmode v. mle? # 92 EDGES? 
+        a.k <- summary(lsm.k)$pmean$coef.table[1]$Estimate # jesus christ, latentnet
+        # No not quite!
+        z.k <- procrustean(z.k, z.avg) 
+        z[,k,] <- z.k
+    }
+    
+    # NOW SCALE
+    # scale <- max(abs(range(z.avg)))
+    bounds <- apply(z.avg, 2, range)
+    scale <- max(bounds[2,] - bounds[1,])/2
+    z.avg <- z.avg * 1/scale
+    z     <- z     * 1/scale
+    
+    # AND CHOOSE THE RIGHT ALPHA #
+    ##############################
+    # Now that we've RE-scaled
+    
+    alpha <- array(dim=(K)) # IS no alpha_b b/c no EDGES
+    
+    # alpha[1] <- find.alpha(avg, z.avg)
+    for(k in 1:K){
+        alpha[k] <- find.alpha(m[,,k], z[,k,])
+    }
+    
+    # FUCK -- if I don't have alpha anymore (or should I just fuckin' keep it)
+    # THEN I -- need to tune the SCALE, to maximize representation. Hm. Fuck.
+
     init <- function(){
-        z <- array(dim=c(N,K,2))
-        for(k in 1:K)
-            z[,k,] <- z.hat
-        return(list(alpha=rep(1,K), z=z, b=z.hat))
+        # z <- array(dim=c(N,K,2))
+        # for(k in 1:K)
+        #     z[,k,] <- z.hat
+        return(list(alpha=alpha, z=z, b=z.avg, lsm=lsm.avg))
     }
     return(init) # needs a FUNCTION, remember -- why, who knows.
 }
+oval.init <- find.init(two.ovals)()
+plot.positions(oval.init$z, oval.init$b, oval.init$alpha)
+# so -- optim returns 100 (the upper bound) but they all look real good at 1. WHY.
+# One more reason to just say fuck alpha, no?
 
 # (Functions for ...)
 ################
@@ -133,7 +235,7 @@ one.shot <- function(edges, sigma, file, model_name, iter){
                 init=hlsm.init,
                 verbose=T,
                 control=list(max_treedepth = 15))
-    theta <- unpack.hlsm.fit(fit, N, K)
+    theta <- unpack.hlsm.fit(fit, N, K)#, which=which)
     return(list(fit=fit, theta=theta, init=hlsm.init()))
 }
 
@@ -144,8 +246,18 @@ one.shot <- function(edges, sigma, file, model_name, iter){
 # EXAMINE THE ESTIMATED VALUES #
 ################################
 
-unpack.hlsm.fit <- function(fit, N, K){
-    s <- summary(fit)$summary[,"mean"]
+unpack.hlsm.fit <- function(fit, N, K, which="max"){
+    # s <- summary(fit)$summary[,"mean"]
+    draws <- as.matrix(fit)
+    if(which=="max")
+        s <- draws[which.max(draws[,"lp__"]),]
+    if(which=="min")
+        s <- draws[which.min(draws[,"lp__"]),]
+    if(which=="mean")
+        s <- colMeans(draws)
+    if(which=="last")
+        s <- draws[nrow(draws),]
+    
     params <- t(array(s, dim=c(K, 1+N+N*K))) # => one k-dim'nl param per line, CUTS lp__
     return(list(alpha=params[1,],
                 b=params[2:(N+1),],
@@ -178,28 +290,52 @@ plot.lsm <- function(alpha, z, add=F, col="black", xlim=c(-2,2), ylim=c(-2,2)){
     }
 }
 
-plot.multigraph <- function(Z, alpha=1){
-    plot.lsm(alpha, Z[,1,], add=F, col=1) # WATCH THE INDEXING HERE -- DID I CHANGE THIS?
-    for(i in 2:dim(Z)[3]){
-        plot.lsm(1, Z[,2,], add=T, col=i)
-    }
+# I NEED -- PLOT POSITIONS, plot.model calls that, and ... plot.multigraph
+# uses igraph, and input is just the -- something. 
+
+# This plots from a set of edges -- the graph itself. plot.model is for the estimate.
+plot.multigraph <- function(Z, alpha=5){
+    
+    
+    # plot.lsm(alpha, Z[,1,], add=F, col=1) # WATCH THE INDEXING HERE -- DID I CHANGE THIS?
+    # for(i in 2:dim(Z)[3]){
+    #     plot.lsm(1, Z[,2,], add=T, col=i)
+    # }
 }
 
-plot.model <- function(m, alpha=NULL, xlim=NULL, ylim=NULL){
-    z <- m$theta$z
-    b <- m$theta$b
-    if(is.null(alpha))
-        alpha <- m$theta$alpha
+plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL){
     # First, make sure the plot is big enough
     if(is.null(xlim))
         xlim <- range(c(z[,,1], b[,1]))
     if(is.null(ylim))
         ylim <- range(c(z[,,2], b[,2]))
     
-    plot.lsm(alpha[1], z[,1,], add=F, col=1, xlim=xlim, ylim=ylim)
-    for(i in 2:dim(z)[2]){
-        plot.lsm(alpha[i], z[,i,], add=T, col=i)
+    if(is.null(alpha)) alpha <- 5
+    if(length(alpha)!=z[2])
+        alpha <- rep(alpha, dim(z)[2]+1)
+    
+    plot.lsm(alpha[1], b, add=F, col=1, xlim=xlim, ylim=ylim)
+    for(i in 1:dim(z)[2]){
+        plot.lsm(alpha[i+1], z[,i,], add=T, col=i+1)
     }
+}
+
+plot.model <- function(m, alpha=NULL, which="max", xlim=NULL, ylim=NULL){
+    
+    # MOTHER FUCK
+    x <- m$theta$z
+    N <- dim(x)[1]
+    K <- dim(x)[2]
+    theta <- unpack.hlsm.fit(m$fit, N, K, which=which)
+    
+    z <- theta$z
+    b <- theta$b
+    init <- m$init$b
+    
+    if(is.null(alpha))
+        alpha <- m$theta$alpha
+    plot.positions(z, b, alpha=alpha, xlim=xlim, ylim=ylim)
+    plot.lsm(alpha=5, z=init, col="blue", add=T)
 }
 
 ####### FUNCTION TESTS #######
@@ -212,7 +348,28 @@ plot.model <- function(m, alpha=NULL, xlim=NULL, ylim=NULL){
 # plot.lsm(.02, zhat$z[,2,], add=T, col="blue")
 
 
+# REMEMBER -- THIS MODEL IS STILL THE MEAN, NOT THE MAP (right?) 
+model.accuracy <- function(edges, m, alpha=NULL){ # ooh, optim!
+    K <- dim(edges)[3]
+    if(is.null(alpha))
+        alpha <- 1
+    if(length(alpha)!=K)
+        alpha <- rep(alpha, K)
+    for(i in 1:dim(edges)[3]){
+        g.hat <- positions.to.matrix(alpha[i], m$theta$z[,i,])
+        tbl <- table(as.vector(g.hat), as.vector(edges[,,i]))
+        print(tbl)
+    }
+}
 
+# Draw little gray dotted lines between versions of the same node
+plot.errors <- function(){
+    
+}
+
+# gotta RE-run, becaue # gotta RE-run, because I changed the name
+# of the parameters, z.hat => theta. Fuckin' ...
+# model.accuracy(two.circles, two.circles.model)
 
 #######################################################
 # SETTING PARAMETERS CREATING DATA AND RUNNING MODELS #
@@ -231,13 +388,6 @@ options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
 # out <- positions.to.matrix(stretch(b, 3), a=1) # moderate clustering at 2, serious at 3
 # plot(graph_from_adjacency_matrix(out)) # sure, not bad
 
-two.circles <- positions.to.multigraph(list(stretch(b, 2, dim=c("x", "y")),
-                                            b))
-
-# For the L1 test -- lambda?
-two.overlapping.circles   <- positions.to.multigraph(list(b, b))
-three.overlapping.circles <- positions.to.multigraph(list(b, b, b))
-
 
 # # # # # # # # # # # # # # # 
 ##############################
@@ -250,28 +400,77 @@ b <- cbind(cos(circle), sin(circle))
 niter <- 1e3
 sigma <- 10
 
+
+library(abind)
+library(igraph)
+
 # TWO ORTHOGONAL OVALS
+plot.lsm(1, stretch(b, 2, dim="x"))
+plot.lsm(1, stretch(b, 2, dim="y"), add=T)
+two.ovals.positions <- aperm(abind(stretch(b, 2, dim="x"),
+                                   stretch(b, 2, dim="y"), along=3),
+                             c(1,3,2))
 two.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
                                           stretch(b, 2, dim="y")))
-two.ovals.model <- one.shot(two.ovals, sigma, "hlsm.stan", "two_ovals", niter)
-plot.multigraph(two.ovals.model$theta$z)
-plot.model(two.ovals.model)
+plot(graph_from_adjacency_matrix(two.ovals[,,1]))
+plot(graph_from_adjacency_matrix(two.ovals[,,2])) # => not exactly
+two.ovals.model <- one.shot(two.ovals, sigma, "hlsm.stan", "two_ovals", 8e4)
+traceplot(two.ovals.model$fit)
+plot.model(two.ovals.model, which="max") # the best (max?)
+
+
+plot.model(two.ovals.model, which="mean") # what the fuck ... what the FUCK though.
+plot.model(two.ovals.model, which="min") # the best (min?)
+plot.model(two.ovals.model, which="last") # the last
+
+
+
+
+# plot.multigraph(two.ovals.model$theta$z)
+# z.hat <- unpack.hlsm.fit(three.ovals.model$fit, N, 3)
+
+m <- two.ovals.model
+plot.positions(m$theta$z, m$theta$b, alpha=10)
+
+# OKAY -- take a BUNCH, do them all ... except, fuckin ... fuck.
+# 'model' should be 'parameters,' no, 'positions,' plot 'fit' maybe? That's positions.
+plot.positions(two.ovals.positions, b, alpha=.1) # what the fuck ... 
+
+
+
+
+
+
 
 
 # THREE ~ORTHOGONAL OVALS
-three.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
-                                            stretch(b, 2, dim="y"),
-                                            rotate.45(stretch(b, 2, dim="y"))))
-three.ovals.model <- one.shot(three.ovals, sigma, "hlsm.stan", "three_ovals", 2e4)
-plot.model(three.ovals.model, alpha=c(.10, .10, .10), xlim=c(-1,1), ylim=c(-1,1)) # oh VERY interesting -- what the hell?
+three.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="y"),
+                                            rotate(stretch(b, 2, dim="y"), pi/3),
+                                            rotate(stretch(b, 2, dim="y"),-pi/3)))
+three.ovals.model <- one.shot(three.ovals, sigma, "hlsm.stan", "three_ovals", niter)
+# 
+plot.model(three.ovals.model, alpha=c(.12, .1, .12), # ... blue?
+           xlim=c(-1,1), ylim=c(-1,1)) # oh VERY interesting -- what the hell?
+plot.multigraph(z.hat$z) # -- what
+plot.lsm(1, z.hat$z[,,1])
 
 
+
+
+
+
+# For the L1 test -- lambda?
 # TWO CONCENTRIC CIRCLES
+two.circles <- positions.to.multigraph(list(stretch(b, 2, dim=c("x", "y")),
+                                            b))
 two.circles.model <- one.shot(two.circles, sigma, "hlsm.stan", "two_circles", niter)
 
+two.overlapping.circles   <- positions.to.multigraph(list(b, b))
 two.ovlp.circles.model   <- one.shot(two.overlapping.circles,  sigvec, "hlsm_lasso.stan", "two_ovlp_circles",    1e3)
 #three.ovlp.circles.model <- one.shot(three.ovlp.circles, sigvec, "hlsm_lasso.stan", "three_ovlp__circles", 2e4)
 
+
+three.overlapping.circles <- positions.to.multigraph(list(b, b, b))
 
 
 
@@ -281,17 +480,39 @@ two.ovlp.circles.model   <- one.shot(two.overlapping.circles,  sigvec, "hlsm_las
 
 
 # What's ONE of these -- 
-hlsm.data[["edges"]]   <- two.circles
+K <- 2
+sigma <- 10
+sigmat <- array(0, dim=c(K,2,2))
+sigmat[,1,1] <- sigma
+sigmat[,2,2] <- sigma
+hlsm.data <- list(N=N,
+                  K=K,
+                  edges=edges,     # make sure these are ints  (not bool) else FLATTENED
+                  sigma_alpha=10,   # NO idea what these should be, using mvlsm's
+                  mu_b=c(0,0),
+                  sigma_b=sigma*diag(2), # [s   0; 0   s] (one matrix)
+                  sigma_z=sigmat)        # [s_k 0; 0 s_k] (one matrix per layer)
+
+hlsm.data[["edges"]]   <- two.ovals
 hlsm.data[["sigma_z"]] <- sigmat
-hlsm.init <- find.init(two.circles)
+hlsm.init <- find.init(two.ovals) # MAYBE THE PROBLEM ? TRY SIMPLER!
+plot.positions(hlsm.init()$z, b, 1) # This looks not too damn bad. What goes wrong?
+# How about -- plot over time? Do them one by one, watch the sampling progress?
 two.circles.fit <- stan(file="hlsm.stan",
-                        model_name="hlsm_sim_two_circles",
-                        iter=1e4,
+                        model_name="hlsm_sim_two_ovals",
+                        iter=2e4,
                         data=hlsm.data, init=hlsm.init,
                         verbose=T, control=list(max_treedepth = 15))
 # BEWARE: These are only defined BELOW. Will need to shuffle everything.
-zhat <- unpack.hlsm.fit(two.circles.fit, N, K)
-plot.multigraph(zhat$z, alpha=5)
+zhat <- unpack.hlsm.fit(two.circles.fit, N, K, which="max")
+plot.positions(zhat$z, b, alpha=2)
+#plot.multigraph(zhat$z, zhat$b, alpha=5)
+
+
+LSMs FOR EACH LAYER, THEN TRANSFORM THEM TO BE CLOSE TO THE PRESUMED BASE/AVG?
+Also, evaluate -- accuracy, and ... WHICH NODE IS WHICH
+
+
 
 
 
@@ -371,7 +592,7 @@ ghat.2 <- positions.to.matrix(.01, zhat$z[,2,])
 ghat.b <- positions.to.matrix(.01, zhat$b)
 
 # plot(graph_from_adjacency_matrix(out)) # it's -- a big fat ball. Okay both are.
-# WAIT -- interesting -- if I just MAKE alpha=1, I get ~ the right answer
+# WAIT -- interesting -- if I just MAKE alpha=5, I get ~ the right answer
 # (if, remember, I also initialized it that way. Wait did I?)
 plot(graph_from_adjacency_matrix(positions.to.matrix(1, b)))
 
