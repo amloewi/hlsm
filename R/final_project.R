@@ -47,7 +47,7 @@ compute.eta <- function(b, epsilon) {
   
 }
 
-objective.function <- function(b, epsilon, y) {
+objective.function <- function(b, epsilon, y, lambda) {
   # Computes objective function (Binomial log MLE with lasso penalty)
   #
   # Args:
@@ -56,7 +56,7 @@ objective.function <- function(b, epsilon, y) {
   #     y: numeric array of dimension (n vs n vs k)
   
   out <- (1-y) * compute.eta(b, epsilon) - log(1 + exp(compute.eta(b, epsilon)))
-  out <- sum(out)
+  out <- sum(out) + lambda * sum(sqrt(epsilon^2))
   
   return(out)
 }

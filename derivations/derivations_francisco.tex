@@ -1,0 +1,91 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb, amsmath}
+
+%SetFonts
+
+%SetFonts
+
+\begin{document}
+
+The Binomial likelihood equation of the HLSM is:
+
+\begin{align*}
+  L &= \prod_k \prod_{i,j} \sigma(\eta_{ijk})^{y_{ijk}}(1-\sigma(\eta_{ijk}))^{1-y_{ijk}}
+\end{align*}
+
+where,
+
+\[
+\eta_{ijk} = -\alpha_k + \|z_{ik} - z_{jk}\|^2 =  -\alpha_k + \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2
+\]
+
+\[
+z_{ik} = b_i + \epsilon_{ik}
+\]
+
+\[
+\sigma(\eta_{ijk}) = \frac{1}{1+\exp(\eta_{ijk})}
+\]
+
+Then, the log likelihood is
+
+\begin{align*}
+  \ell 	&= \sum_k \sum_{i,j} {y_{ijk}} \ln \sigma(\eta_{ijk}) + (1-y_{ijk})\ln(1- \sigma(\eta_{ijk})) \\
+  	&= \sum_k \sum_{i,j} - {y_{ijk}} \ln (1+\exp(\eta_{ijk})) + (1-y_{ijk})\ln\left (\frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk})}\right) \\
+  	&= \sum_k \sum_{i,j} - {y_{ijk}} \ln (1+\exp(\eta_{ijk})) + (1-y_{ijk})[\eta_{ijk} - \ln (1+\exp(\eta_{ijk}))] \\
+ 	& = \sum_k \sum_{i,j} (1-y_{ijk})\eta_{ijk} - \ln (1+\exp(\eta_{ijk}))
+\end{align*}
+
+We define our decision variables as: $\{b_i\}$ $\forall~i$ and $\{\epsilon_{ik}\}$ $\forall~i,k$.
+
+Then, the gradients are:
+
+\[
+\frac{\partial \eta_{ijk}}{\partial b_{ik}} = 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\]
+
+\[
+\frac{\partial \eta_{ijk}}{\partial b_{jk}} = - 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\]
+
+\[
+\frac{\partial \eta_{ijk}}{\partial \epsilon_{ik}} = 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\]
+
+\[
+\frac{\partial \eta_{ijk}}{\partial \epsilon_{jk}} = - 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\]
+
+\begin{align*}
+\frac{\partial \ell}{\partial b_{ik}} & =  \sum_{j} (1-y_{ijk})\frac{\partial \eta_{ijk}}{\partial b_{ik}} - \frac{\partial \ln (1+\exp(\eta_{ijk}))}{\partial b_{ik}} \\
+& = 2 \sum_{j} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{1}{1+\exp(\eta_{ijk}))}\exp(\eta_{ijk})(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+& = 2 \sum_{j} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+\end{align*}
+
+\begin{align*}
+\frac{\partial \ell}{\partial b_{jk}} & = - 2 \sum_{i} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+\end{align*}
+
+\begin{align*}
+\frac{\partial \ell}{\partial \epsilon_{ik}} & = 2 \sum_{j} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+\end{align*}
+
+\begin{align*}
+\frac{\partial \ell}{\partial \epsilon_{jk}} & = - 2 \sum_{i} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+\end{align*}
+
+Finally, our complete objective function is to minimize the sum between the negative log likelihood and a lasso penalty on the deviations $\epsilon_{ik}$.
+
+\begin{align*}
+\min_{\epsilon, b} \sum_k \sum_{i,j} [ (y_{ijk} - 1)\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \sum_i \| \epsilon_{i,k}\|
+\end{align*}
+
+
+
+\end{document}  
