@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.5.22)  8 DEC 2017 00:07
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.5.22)  8 DEC 2017 16:55
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -359,67 +359,57 @@ File: hlsm_traceplot.png Graphic file (type png)
 <use hlsm_traceplot.png>
 Package pdftex.def Info: hlsm_traceplot.png used on input line 88.
 (pdftex.def)             Requested size: 289.07999pt x 207.2268pt.
-
-
-LaTeX Warning: Reference `fig:chains' on page 4 undefined on input line 95.
-
-[4]
-Underfull \hbox (badness 10000) in paragraph at lines 108--109
-
- []
-
-[5 <./hlsm_traceplot.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 110--111
+ [4] [5 <./hlsm_traceplot.png>] [6]
+Underfull \hbox (badness 10000) in paragraph at lines 141--142
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 112--113
+Underfull \hbox (badness 10000) in paragraph at lines 143--144
 
  []
 
 
-Overfull \hbox (46.15814pt too wide) in paragraph at lines 114--115
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
+
+ []
+
+
+Overfull \hbox (46.15814pt too wide) in paragraph at lines 147--148
 \OT1/cmr/m/it/10.95 prob-a-bilis-tic pro-gram-ming lan-guage\OT1/cmr/m/n/10.95 
 . Jour-nal of Sta-tis-ti-cal Soft-ware 76(1). DOI 10.18637/jss.v076.i01,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 114--115
+Underfull \hbox (badness 10000) in paragraph at lines 147--148
 
  []
 
-[6] (./HLSM.aux)
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
- ) 
+[7] (./HLSM.aux) ) 
 Here is how much of TeX's memory you used:
- 4718 strings out of 493014
- 75612 string characters out of 6133351
- 229003 words of memory out of 5000000
- 8205 multiletter control sequences out of 15000+600000
- 13022 words of font info for 50 fonts, out of 8000000 for 9000
+ 4716 strings out of 493014
+ 75588 string characters out of 6133351
+ 233011 words of memory out of 5000000
+ 8204 multiletter control sequences out of 15000+600000
+ 12714 words of font info for 49 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  54i,9n,51p,8583b,230s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
-></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb>
-</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
-/usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></u
-sr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr
-/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/l
-ocal/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/loc
-al/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/
-texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/local
-/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/
-texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on HLSM.pdf (6 pages, 199212 bytes).
+</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmex10.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmmi10.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmmi6.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmmi8.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr10.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+r12.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8
+.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx1
+0.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10
+.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.p
+fb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pf
+b>
+Output written on HLSM.pdf (7 pages, 202138 bytes).
 PDF statistics:
- 70 PDF objects out of 1000 (max. 8388607)
- 48 compressed objects within 1 object stream
+ 75 PDF objects out of 1000 (max. 8388607)
+ 52 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  6 words of extra memory for PDF output out of 10000 (max. 10000000)
 
