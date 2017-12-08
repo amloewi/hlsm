@@ -429,21 +429,16 @@ two.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
 plot.errors(two.ovals.positions, b) # Good!
 
 plot(graph_from_adjacency_matrix(two.ovals[,,1]))
-plot(graph_from_adjacency_matrix(two.ovals[,,2])) # => not exactly
+plot(graph_from_adjacency_matrix(two.ovals[,,2])) 
 ovals.init <- find.init(two.ovals)
 
 model.accuracy(two.ovals, ovals.init()$z, ovals.init()$alpha) # Before: not BAD, 
 model.accuracy(two.ovals, two.ovals.model$theta$z, two.ovals.model$theta$alpha) # WORSE
 
-
 two.ovals.model <- one.shot(two.ovals, sigma, "hlsm.stan", "two_ovals", 8e4)
 traceplot(two.ovals.model$fit)
-plot.model(two.ovals.model, which="max") # the best (max?)
-plot.errors(two.ovals.model$z, two.ovals.model$b)
-
-plot.model(two.ovals.model, which="mean") # what the fuck ... what the FUCK though.
-plot.model(two.ovals.model, which="min") # the best (min?)
-plot.model(two.ovals.model, which="last") # the last
+plot.model(two.ovals.model, which="max") # the best
+plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 
 
@@ -531,10 +526,6 @@ plot.positions(zhat$z, b, alpha=2)
 #plot.multigraph(zhat$z, zhat$b, alpha=5)
 
 
-LSMs FOR EACH LAYER, THEN TRANSFORM THEM TO BE CLOSE TO THE PRESUMED BASE/AVG?
-Also, evaluate -- accuracy, and ... WHICH NODE IS WHICH
-
-
 
 
 
@@ -547,6 +538,11 @@ Also, evaluate -- accuracy, and ... WHICH NODE IS WHICH
 # THE DUMP -- old tests, bad ideas, etc #
 #########################################
 #########################################
+
+plot.model(two.ovals.model, which="mean") # what the fuck ... what the FUCK though.
+plot.model(two.ovals.model, which="min") # the best (min?)
+plot.model(two.ovals.model, which="last") # the last
+
 
 # BARBELLS AND ROTATIONS -- maybe not very clear thinking
 # The sparse path connecting the dense ends
