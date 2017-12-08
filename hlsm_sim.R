@@ -349,23 +349,34 @@ plot.model <- function(m, alpha=NULL, which="max", xlim=NULL, ylim=NULL){
 
 
 # REMEMBER -- THIS MODEL IS STILL THE MEAN, NOT THE MAP (right?) 
-model.accuracy <- function(edges, m, alpha=NULL){ # ooh, optim!
+model.accuracy <- function(edges, z, alpha=NULL){ # ooh, optim!
     K <- dim(edges)[3]
     if(is.null(alpha))
         alpha <- 1
     if(length(alpha)!=K)
         alpha <- rep(alpha, K)
     for(i in 1:dim(edges)[3]){
-        g.hat <- positions.to.matrix(alpha[i], m$theta$z[,i,])
+        g.hat <- positions.to.matrix(alpha[i], z[,i,])
         tbl <- table(as.vector(g.hat), as.vector(edges[,,i]))
         print(tbl)
     }
 }
+model.accuracy(two.ovals, two.ovals.model, two.ovals.model$theta$alpha) # after ...
+model.accuracy(two.ovals, two.ovals.positions, 1) # okay so, perfect ... 
+model.accuracy(two.ovals, ovals.init$z, ovals.init$alpha)
+
 
 # Draw little gray dotted lines between versions of the same node
-plot.errors <- function(){
-    
+plot.errors <- function(z, b){
+    for(i in 1:N){
+        for(k in 1:K){
+            x <- c(z[i,k,1], b[i,1])
+            y <- c(z[i,k,2], b[i,2])
+            lines(x, y, col='gray', lty=2)
+        }
+    }
 }
+plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 # gotta RE-run, becaue # gotta RE-run, because I changed the name
 # of the parameters, z.hat => theta. Fuckin' ...
@@ -405,19 +416,30 @@ library(abind)
 library(igraph)
 
 # TWO ORTHOGONAL OVALS
-plot.lsm(1, stretch(b, 2, dim="x"))
+plot.lsm(1, b)
+plot.lsm(1, stretch(b, 2, dim="x"), add=T)
 plot.lsm(1, stretch(b, 2, dim="y"), add=T)
+plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
+
 two.ovals.positions <- aperm(abind(stretch(b, 2, dim="x"),
                                    stretch(b, 2, dim="y"), along=3),
                              c(1,3,2))
 two.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
                                           stretch(b, 2, dim="y")))
+plot.errors(two.ovals.positions, b) # Good!
+
 plot(graph_from_adjacency_matrix(two.ovals[,,1]))
 plot(graph_from_adjacency_matrix(two.ovals[,,2])) # => not exactly
+ovals.init <- find.init(two.ovals)
+
+model.accuracy(two.ovals, ovals.init()$z, ovals.init()$alpha) # Before: not BAD, 
+model.accuracy(two.ovals, two.ovals.model$theta$z, two.ovals.model$theta$alpha) # WORSE
+
+
 two.ovals.model <- one.shot(two.ovals, sigma, "hlsm.stan", "two_ovals", 8e4)
 traceplot(two.ovals.model$fit)
 plot.model(two.ovals.model, which="max") # the best (max?)
-
+plot.errors(two.ovals.model$z, two.ovals.model$b)
 
 plot.model(two.ovals.model, which="mean") # what the fuck ... what the FUCK though.
 plot.model(two.ovals.model, which="min") # the best (min?)
