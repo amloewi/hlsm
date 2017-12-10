@@ -109,7 +109,7 @@ The norm term in the objective makes it impossible to isolate the latent variabl
 First, for notational convenience, we define variables for the interior of the edge model
 \begin{align*}
 \eta_{ijk} &= \alpha_k - \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2_2\\
-d_{ijk} &= (b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+d_{ijk} &= \sqrt{\|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2_2}
 \end{align*}
 
 Then, we attempt to optimize the vector-valued variables, leaving the elements of the vector in place until the end.
@@ -133,10 +133,10 @@ Then, we attempt to optimize the vector-valued variables, leaving the elements o
 Last, the derivation for the $\epsilon$ terms proceeds identically to that for the $b$'s, with the exception of the penalty, leading to
 
 \begin{align}
-\frac{\partial \ell(\alpha, b, \epsilon)}{\partial \epsilon_{ik}} &= \sum_{j} (\sigma(\eta_{ijk}) - y_{ijk})d_{ijk} + [-1,1] \ni 0
+\frac{\partial \ell(\alpha, b, \epsilon)}{\partial \epsilon_{ik}} &= \sum_{j} (\sigma(\eta_{ijk}) - y_{ijk})d_{ijk} + [-\lambda,\lambda] \ni 0
 \end{align}
 
-While not identical, these equations are very similar to the implicit solutions for logistic regression, which cannot be solved in closed form. A common approach is to find a numerical approximation using Iteratively Reweighted Least Squares, and so that is what is used here. 
+While not identical, these equations are very similar to the implicit solutions for logistic regression, which cannot be solved in closed form. Since we are optimizing coordinate-wise however we can perform univariate root-finding, or simple optimization routines such as Brent-Dekker, each time.
 
 \section{Bibliography}
 
