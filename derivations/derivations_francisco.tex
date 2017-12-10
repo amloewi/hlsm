@@ -16,13 +16,13 @@
 The Binomial likelihood equation of the HLSM is:
 
 \begin{align*}
-  L &= \prod_k \prod_{i,j} \sigma(\eta_{ijk})^{y_{ijk}}(1-\sigma(\eta_{ijk}))^{1-y_{ijk}}
+  L &= \prod_k \prod_{i}\prod_{j<i} \sigma(\eta_{ijk})^{y_{ijk}}(1-\sigma(\eta_{ijk}))^{1-y_{ijk}}
 \end{align*}
 
 where,
 
 \[
-\eta_{ijk} = -\alpha_k + \|z_{ik} - z_{jk}\|^2 =  -\alpha_k + \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2
+\eta_{ijk} = \alpha_k - \|z_{ik} - z_{jk}\|^2 =  \alpha_k - \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2
 \]
 
 \[
@@ -30,60 +30,60 @@ z_{ik} = b_i + \epsilon_{ik}
 \]
 
 \[
-\sigma(\eta_{ijk}) = \frac{1}{1+\exp(\eta_{ijk})}
+\sigma(\eta_{ijk}) = \frac{1}{1+\exp(-\eta_{ijk})}
 \]
 
 Then, the log likelihood is
 
 \begin{align*}
-  \ell 	&= \sum_k \sum_{i,j} {y_{ijk}} \ln \sigma(\eta_{ijk}) + (1-y_{ijk})\ln(1- \sigma(\eta_{ijk})) \\
-  	&= \sum_k \sum_{i,j} - {y_{ijk}} \ln (1+\exp(\eta_{ijk})) + (1-y_{ijk})\ln\left (\frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk})}\right) \\
-  	&= \sum_k \sum_{i,j} - {y_{ijk}} \ln (1+\exp(\eta_{ijk})) + (1-y_{ijk})[\eta_{ijk} - \ln (1+\exp(\eta_{ijk}))] \\
- 	& = \sum_k \sum_{i,j} (1-y_{ijk})\eta_{ijk} - \ln (1+\exp(\eta_{ijk}))
+  \ell 	&= \sum_k \sum_{i} \sum_{j < i} {y_{ijk}} \ln \sigma(\eta_{ijk}) + (1-y_{ijk})\ln(1- \sigma(\eta_{ijk})) \\
+  	&= \sum_k \sum_{i} \sum_{j < i} - {y_{ijk}} \ln (1+\exp(-\eta_{ijk})) + (1-y_{ijk})\ln\left (\frac{\exp(-\eta_{ijk})}{1+\exp(-\eta_{ijk})}\right) \\
+  	&= \sum_k \sum_{i} \sum_{j < i} - {y_{ijk}} \ln (1+\exp(-\eta_{ijk})) + (1-y_{ijk})[-\eta_{ijk} - \ln (1+\exp(-\eta_{ijk}))] \\
+  	&=\sum_k \sum_{i} \sum_{j < i} - {y_{ijk}} \ln (1+\exp(-\eta_{ijk})) -\eta_{ijk} - \ln (1+\exp(-\eta_{ijk})) + y_{ijk} \eta_{ijk} + y_{ijk}\ln (1+\exp(-\eta_{ijk}))] \\
+ 	& = \sum_k \sum_{i} \sum_{j < i} (y_{ijk}-1)\eta_{ijk} - \ln (1+\exp(-\eta_{ijk}))
 \end{align*}
 
 We define our decision variables as: $\{b_i\}$ $\forall~i$ and $\{\epsilon_{ik}\}$ $\forall~i,k$.
 
-Then, the gradients are:
+Then, the gradients of the $\eta_{ijk}$ are:
 
 \[
-\frac{\partial \eta_{ijk}}{\partial b_{ik}} = 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\frac{\partial \eta_{ijk}}{\partial b_{i}} =  - 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
 \]
 
 \[
-\frac{\partial \eta_{ijk}}{\partial b_{jk}} = - 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\frac{\partial \eta_{ijk}}{\partial b_{j}} = 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
 \]
 
 \[
-\frac{\partial \eta_{ijk}}{\partial \epsilon_{ik}} = 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\frac{\partial \eta_{ijk}}{\partial \epsilon_{ik}} = - 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
 \]
 
 \[
-\frac{\partial \eta_{ijk}}{\partial \epsilon_{jk}} = - 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
+\frac{\partial \eta_{ijk}}{\partial \epsilon_{jk}} = 2(b_i + \epsilon_{ik} - b_j - \epsilon_{jk})
 \]
 
 \begin{align*}
-\frac{\partial \ell}{\partial b_{ik}} & =  \sum_{j} (1-y_{ijk})\frac{\partial \eta_{ijk}}{\partial b_{ik}} - \frac{\partial \ln (1+\exp(\eta_{ijk}))}{\partial b_{ik}} \\
-& = 2 \sum_{j} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{1}{1+\exp(\eta_{ijk}))}\exp(\eta_{ijk})(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
-& = 2 \sum_{j} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+\frac{\partial \ell}{\partial b_{m}} & =  \sum_k \sum_{i}  \sum_{j<i} (y_{ijk} -1)\frac{\partial \eta_{ijk}}{\partial b_{m}} - \frac{\partial \ln (1+\exp(-\eta_{ijk}))}{\partial b_{m}} \\
+& =  \sum_k\left[ \sum_{j<m} (y_{mjk} -1)\frac{\partial \eta_{mjk}}{\partial b_{m}} - \frac{\partial \ln (1+\exp(-\eta_{mjk}))}{\partial b_{m}} +  \sum_{i > m} (y_{imk} -1)\frac{\partial \eta_{imk}}{\partial b_{m}} - \frac{\partial \ln (1+\exp(-\eta_{imk}))}{\partial b_{m}} \right] \\
+%
+& =  \sum_k\bigg[ -2 \sum_{j<m} \left[(y_{mjk} -1)(b_m + \epsilon_{mk} - b_j + \epsilon_{jk}) + \frac{\exp(-\eta_{mjk})}{1+\exp(-\eta_{mjk})}(b_m + \epsilon_{mk} - b_j - \epsilon_{jk}) \right] \\
+& \quad\quad\quad +  2 \sum_{i > m} \left[(y_{imk} -1)(b_i + \epsilon_{ik} - b_m - \epsilon_{mk}) +\frac{\exp(-\eta_{ijk})}{1+\exp(-\eta_{mjk})}(b_i + \epsilon_{ik} - b_m - \epsilon_{mk}) \right] \bigg] \\
+& =  2 \sum_k\bigg[ - \sum_{j<m} \left(y_{mjk} -1 + \frac{\exp(-\eta_{mjk})}{1+\exp(-\eta_{mjk})}\right)(z_{mk} - z_{jk})\\
+& \quad\quad\quad\quad +  \sum_{i > m} \left(y_{imk} -1 + \frac{\exp(-\eta_{ijk})}{1+\exp(-\eta_{mjk})}\right)(z_{ik} - z_{mk}) \bigg] \\
+%
 \end{align*}
 
 \begin{align*}
-\frac{\partial \ell}{\partial b_{jk}} & = - 2 \sum_{i} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
+\frac{\partial \ell}{\partial \epsilon_{mk}} & = 2 \bigg[ - \sum_{j<m} \left(y_{mjk} -1 + \frac{\exp(-\eta_{mjk})}{1+\exp(-\eta_{mjk})}\right)(z_{mk} - z_{jk})\\
+& \quad\quad +  \sum_{i > m} \left(y_{imk} -1 + \frac{\exp(-\eta_{ijk})}{1+\exp(-\eta_{mjk})}\right)(z_{ik} - z_{mk}) \bigg]
 \end{align*}
 
-\begin{align*}
-\frac{\partial \ell}{\partial \epsilon_{ik}} & = 2 \sum_{j} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
-\end{align*}
-
-\begin{align*}
-\frac{\partial \ell}{\partial \epsilon_{jk}} & = - 2 \sum_{i} (1-y_{ijk}) (b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) - \frac{\exp(\eta_{ijk})}{1+\exp(\eta_{ijk}))}(b_i + \epsilon_{ik} - b_j - \epsilon_{jk}) \\
-\end{align*}
 
 Finally, our complete objective function is to minimize the sum between the negative log likelihood and a lasso penalty on the deviations $\epsilon_{ik}$.
 
 \begin{align*}
-\min_{\epsilon, b} \sum_k \sum_{i,j} [ (y_{ijk} - 1)\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \sum_i \| \epsilon_{i,k}\|
+\min_{\epsilon, b} \sum_k \sum_{i} \sum_{j < i} [ (1 - y_{ijk})\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \sum_i \| \epsilon_{i,k}\|
 \end{align*}
 
 where $\|.\|$ represents the L2 norm. Since this is not differentiable, we could use proximal gradient descent. If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
