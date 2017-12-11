@@ -417,8 +417,8 @@ library(igraph)
 
 # TWO ORTHOGONAL OVALS
 plot.lsm(1, b)
-plot.lsm(1, stretch(b, 2, dim="x"), add=T)
-plot.lsm(1, stretch(b, 2, dim="y"), add=T)
+plot.lsm(1, stretch(b, 2, dim="x"), add=T, col=2)
+plot.lsm(1, stretch(b, 2, dim="y"), add=T, col=4)
 plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 two.ovals.positions <- aperm(abind(stretch(b, 2, dim="x"),
@@ -601,6 +601,8 @@ source("/path/to/file/my_fn_lib1.r")
 
 # with lambda=1, everything got zeroed out. Dropping to .1.
 out <- coord.opt(two.ovals, a, b., e, .1, maxit=20) # FUCK. What is it and why? 'a'.
+# mother fuck -- it appears to have ... is the penalty on backwards? Back up, asshole.
+
 
 # Okay well now, it's all OVER the fucking place. K -- fuck. Need to back up,
 # commit, and try again. Fuck.

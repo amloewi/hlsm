@@ -63,16 +63,18 @@
 %	TITLE SECTION
 %----------------------------------------------------------------------------------------
 
-\title{Hierarchical Latent Space Models} % Poster title
+\title{Hierarchical Latent Space Models for Social Network Analysis} % Poster title
 
-\author{Alex Loewi\textsuperscript{1},
+\author{Alex Loewi\textsuperscript{1,4},
   Francisco Ralston\textsuperscript{2},
-  Octavio Mesner\textsuperscript{2,3}} % Author(s)
+  Octavio Mesner\textsuperscript{2,3,4}} % Author(s)
 
 \institute{\textsuperscript{1}Public Policy,
   \textsuperscript{2}Engineering \& Public Policy,
   %Carnegie Mellon University;
-  \textsuperscript{3}Statistics \& Data Science
+  \textsuperscript{3}Statistics \& Data Science,
+    \textsuperscript{3}Machine Learning
+
 } % Institution(s)
 
 %----------------------------------------------------------------------------------------
@@ -114,26 +116,31 @@
 \begin{block}{Introduction}
 
 \textbf{Problem:} 
-
+Multigraphs are a complex, but naturally occurring, and highly valuable, form for data. While several recent papers attest to an agreement that models for multigraphs are valuable, these models all have several important problems when it comes to using them in one key area -- Social Network Analysis (SNA). Social science and network analysis in particular rely heavily on intuitive and interpretable models, which becomes an increasingly large problem as the data they analyze becomes increasingly complex. Here, we present a model that solves several of the major problems of interpretability, while retaining rigorous statistical underpinnings.
 \end{block}
 
 \begin{block}{Data}
+The motivating data for this problem comes from a recently conducted study at a charter school in West Baltimore. The study collected, among other sources, a five-layer valued network between the approximately eighty employees of the school. These layers were comprised of the answers questions in the following areas:
   \begin{itemize}
-  \item 
+  \item Frequency of interaction
+  \item Discussing Academics
+  \item Discussing Behavior
+  \item Social interaction
+  \item Professionally Helpful Relationship
   \end{itemize}
+While empirically these layers are found to have very high correlations, modeling them in a way that demonstrates those correlations is challenging.
 \end{block}
 
-\begin{block}{Model}
+\begin{block}{Goals}
+An ideal model would solve the following problems:
+
   \begin{enumerate}
-  \item 
+  \item Comparable layouts
+  \item Layer-wise dimensionality reduction
+  \item Manually tunable between comparable and expressive
   \end{enumerate}
 \end{block}
 
-\begin{block}{Test}
-  \begin{itemize}
-  \item 
-  \end{itemize}
-\end{block}
 
 %------------------------------------------------
 
@@ -153,25 +160,19 @@
 %	MATERIALS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Materials}
+\begin{block}{Model}
 
-The following materials were required to complete the research:
+The model is based on the widely used Latent Space Model (LSM) for social networks. This model has the following form:
 
-\begin{itemize}
-\item Curabitur pellentesque dignissim
-\item Eu facilisis est tempus quis
-\item Duis porta consequat lorem
-\item Eu facilisis est tempus quis
-\end{itemize}
+\[
+\prod_k \prod_{ij} \sigma_{ijk}^{y_{ijk}}(1- \sigma_{ijk})^{1-y_{ijk}}
+\]
 
-The materials were prepared according to the steps outlined below:
+\[
+\sigma_{ijk} = \text{logit}^{-1}(\alpha_k - d(z_{ik}, z_{jk}))
+\]
 
-\begin{enumerate}
-\item Curabitur pellentesque dignissim
-\item Eu facilisis est tempus quis
-\item Duis porta consequat lorem
-\item Curabitur pellentesque dignissim
-\end{enumerate}
+The original model has two simple elements: one, a binomial likelihood for the edges, making for easy and stable inference. And two, an edge probability based on the distance of the two node's latent variables, $z_i, z_j$. The farther apart these variables are, the less likely an edge is. The original model uses the observed edges to infer possible latent positions for the nodes that satisfy these relationships.
 
 \end{block}
 
@@ -187,7 +188,20 @@ The materials were prepared according to the steps outlined below:
 
 \begin{block}{Methods}
 
-Lorem ipsum dolor \textbf{sit amet}, consectetur adipiscing elit. Sed laoreet accumsan mattis. Integer sapien tellus, auctor ac blandit eget, sollicitudin vitae lorem. Praesent dictum tempor pulvinar. Suspendisse potenti. Sed tincidunt varius ipsum, et porta nulla suscipit et. Etiam congue bibendum felis, ac dictum augue cursus a. \textbf{Donec} magna eros, iaculis sit amet placerat quis, laoreet id est. In ut orci purus, interdum ornare nibh. Pellentesque pulvinar, nibh ac malesuada accumsan, urna nunc convallis tortor, ac vehicula nulla tellus eget nulla. Nullam lectus tortor, \textit{consequat tempor hendrerit} quis, vestibulum in diam. Maecenas sed diam augue.
+To fit these models, three methods were tested on the following likelihood:
+
+\[
+\prod_k \prod_{ij} \sigma_{ijk}^{y_{ijk}}(1- \sigma_{ijk})^{1-y_{ijk}} + \lambda\sum_i \sum_k |\epsilon_{ik}|
+\]
+
+
+\begin{enumerate}
+\item Proximal Gradient Descent
+\item Coordinate-Wise Optimization
+\item Hamiltonian Monte Carlo methods (for comparison)
+\end{enumerate}
+
+The first was used as a natural approach to the lasso penalized problem, the second was used to prevent the model from ``spinning'' during inference, and the third is the typical way in which these models were fit, used for combarability.
 
 \end{block}
 
@@ -201,9 +215,9 @@ Lorem ipsum dolor \textbf{sit amet}, consectetur adipiscing elit. Sed laoreet ac
 %	IMPORTANT RESULT
 %----------------------------------------------------------------------------------------
 
-\begin{alertblock}{Important Result}
+\begin{alertblock}{Takeaway}
 
-Lorem ipsum dolor \textbf{sit amet}, consectetur adipiscing elit. Sed commodo molestie porta. Sed ultrices scelerisque sapien ac commodo. Donec ut volutpat elit.
+Convex methods have valuable contributions for fitting complex Latent Space Models, and their extensions
 
 \end{alertblock} 
 
@@ -217,27 +231,17 @@ Lorem ipsum dolor \textbf{sit amet}, consectetur adipiscing elit. Sed commodo mo
 %	MATHEMATICAL SECTION
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Mathematical Section}
+\begin{block}{Model's Advantages}
 
-Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
-  
-\begin{equation}
-E = mc^{2}
-\label{eqn:Einstein}
-\end{equation}
+Our model has the additional inclusion of a hierarchy on the latent variables:
 
-Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
+\[
+z_{ik} = b_i + \epsilon_{ik}
+\]
 
-\begin{equation}
-\cos^3 \theta =\frac{1}{4}\cos\theta+\frac{3}{4}\cos 3\theta
-\label{eq:refname}
-\end{equation}
+each node has a separate latent position to explain its ties within a single layer of the multigraph, but these multiple positions are all tied together by a single ``base'' position for that node $b_i$, and a layer-specific perturbation, $\epsilon_{ik}$.
 
-Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
-
-\begin{equation}
-\kappa =\frac{\xi}{E_{\mathrm{max}}} %\mathbb{ZNR}
-\end{equation}
+This allows two major advantages. One is graph-wise regularization with a group lasso penalty, allowing entire redundant layers to be removed for meaningful dimensionality reduction. Second, regularization allows a manual tuning between layouts that are expressive, and those that are comparable, solving the difficult problem of visual comparability.
 
 \end{block}
 
@@ -288,11 +292,12 @@ Treatment 3 & 0.0009271 & 0.296 \\
 
 \begin{column}{\onecolwid} % The third column
 
-\begin{block}{Clustering}
-
-  \begin{itemize}
-  \item 
-  \end{itemize}
+\begin{block}{A Simple Test}
+\begin{figure}
+\centering
+\includegraphics{error_daisy}
+\caption{A Stylized Multigraph}
+\end{figure}
 
 \end{block}
 
@@ -300,11 +305,11 @@ Treatment 3 & 0.0009271 & 0.296 \\
 %	ADDITIONAL INFORMATION
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Paths}
-
- \textbf{Weeks gestation:} 
-
-\end{block}
+%\begin{block}{Paths}
+%
+% \textbf{Weeks gestation:} 
+%
+%\end{block}
 
 
 %----------------------------------------------------------------------------------------
@@ -313,7 +318,7 @@ Treatment 3 & 0.0009271 & 0.296 \\
 
 \begin{block}{Conclusion}
 
-
+We found that proximal gradient methods are an effective tool for refining an HLSM fit, given a good starting point.
 
 
 \end{block}
@@ -323,13 +328,24 @@ Treatment 3 & 0.0009271 & 0.296 \\
 %	REFERENCES
 %----------------------------------------------------------------------------------------
 
-% \begin{block}{References}
+ \begin{block}{References}
 
-% \nocite{*} % Insert publications even if they are not cited in the poster
-% \small{\bibliographystyle{unsrt}
-% \bibliography{sample}\vspace{0.75in}}
+ \nocite{*} % Insert publications even if they are not cited in the poster
+ \small{\bibliographystyle{unsrt}
+ \bibliography{sample}\vspace{0.75in}}
 
-% \end{block}
+Hoff, Peter D., Adrian E. Raftery, and Mark S. Handcock. \textit{Latent space approaches to social network analysis.} Journal of the american Statistical association 97.460 (2002): 1090-1098.\\
+\\
+Salter-Townshend, Michael, and Tyler H. McCormick. \textit{Latent space models for multiview network data}. Technical Report 622, Department of Statistics, University of Washington, 2013.\\
+\\
+Salter-Townshend. M, \textit{Personal communication}, 2017\\
+\\
+Bob Carpenter, Andrew Gelman, Matthew D. Hoffman, Daniel Lee, Ben Goodrich, Michael Betancourt, Marcus Brubaker, Jiqiang Guo, Peter Li, and Allen Riddell. \textit{Stan: A probabilistic programming language}. Journal of Statistical Software 76(1). DOI 10.18637/jss.v076.i01, 2017\\
+\\
+Loewi, A., \textit{Parent-Teacher Relationships and Student Outcomes}, 2017
+
+
+ \end{block}
 
 %----------------------------------------------------------------------------------------
 %	ACKNOWLEDGEMENTS
@@ -340,11 +356,10 @@ Treatment 3 & 0.0009271 & 0.296 \\
 \begin{block}{Acknowledgements}
 
   \small{\rmfamily{
-      We would like to thank the study team and participants from MOMS
-      for sharing their data for this analysis. Without them, this
-      work would not be possible. This work was partially funded by
-      grants from the Hillman Foundation and the Richard King Mellon
-      Foundation.}} \\
+      The authors would like to thank the Network Analysis group in the
+      Department of Statistics and Data Science for their invitation to 
+      present, and the helpful feedback they contributed.
+      }} \\
 
 \end{block}
 
