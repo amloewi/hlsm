@@ -7,23 +7,50 @@
 #
 #
 dummy.y <- function(){
+  y <- array(0, dim=c(10, 10, 3)) 
+  yy <- matrix(0, nrow=10, ncol=10)
   
- y <- array(0, dim=c(10, 10, 3)) 
+  aa <- sample(c(0,1), 45, replace=TRUE)
+  yy[lower.tri(yy)] <- aa
+  yy <- yy + t(yy)
+  
+  y[ , , 1] <- yy
+  
+  # randomly delete 4 edges
+  aa.2 <- aa
+  aa.2[sample(which(aa == 1), 4)] <- 0
+  # randomly create 4 more edges
+  aa.2[sample(which(aa == 0), 4)] <- 1
 
- y[ , , 1] <- matrix(c(0, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-                       0, 0, 1, 0, 1, 0, 0, 1, 0, 0,
-                       0, 0, 0, 1, 1, 0, 0, 1, 0, 0,
-                       0, 0, 1, 0, 1, 0, 0, 1, 0, 0,
-                       0, 0, 1, 1, 0, 0, 0, 1, 0, 0,
-                       0, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-                       0, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-                       0, 0, 1, 1, 1, 0, 0, 0, 0, 0,
-                       0, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-                       0, 0, 1, 1, 1, 0, 0, 1, 0, 0))
-   
+  yy <- matrix(0, nrow=10, ncol=10)
+  yy[lower.tri(yy)] <- aa.2
+  yy <- yy + t(yy)
   
+  y[ , , 2] <- yy
+  
+  # randomly delete 4 edges
+  aa.3 <- aa
+  aa.3[sample(which(aa == 1), 4)] <- 0
+  # randomly create 4 more edges
+  aa.3[sample(which(aa == 0), 4)] <- 1
+  
+  yy <- matrix(0, nrow=10, ncol=10)
+  yy[lower.tri(yy)] <- aa.3
+  yy <- yy + t(yy)
+  
+  y[ , , 3] <- yy
+  
+  g1 <- graph.adjacency(y[ , , 1], mode='undirected')
+  plot.igraph(g1, layout=layout.circle)
+
+  g2 <- graph.adjacency(y[ , , 2], mode='undirected')
+  plot.igraph(g2, layout=layout.circle)
+
+  g3 <- graph.adjacency(y[ , , 3], mode='undirected')
+  plot.igraph(g3, layout=layout.circle)
+  
+  return(y)
 }
-
 
 test.case <- function(){
   
@@ -43,8 +70,6 @@ test.case <- function(){
   stretch(b, 2, dim="y")
   
   return(b)
-  
-  
 }
 
 sigmoid <- function(x) {
@@ -53,7 +78,7 @@ sigmoid <- function(x) {
   return(1 / (1 + np.exp(x)))
 }
 
-compute.eta <- function(b, epsilon, alpha.value=5) {
+compute.eta <- function(b, epsilon, alpha.value=1) {
   # computes the eta function (argument of the sigmoid)
   #
   # Args:
@@ -127,6 +152,7 @@ proximal_op <- function(b, epsilon, t, lambda){
   for (k in dim.epsilon[3]){
     norm_value <- sqrt(sum(epsilon[ , , k]^2))
     
+    alpha <- 0
     if(norm_value >= t*lambda){
       alpha <- ((norm_value - t*lambda)/norm_value)*epsilon[ , , k]
     }
@@ -147,7 +173,7 @@ gradient_g <- function(b, epsilon, y){
   #               2-d of from b for each node in each level
   #     y: numeric array of dimension (n vs n vs k)
   
-  n <- dim(epsilon)[2]
+  n <- dim(epsilon)[1]
   K <- dim(epsilon)[3]
   
   z <- array(b, dim=c(dim(b), K)) + epsilon
@@ -168,14 +194,17 @@ gradient_g <- function(b, epsilon, y){
   
   # gradient for b
   for (m in 1:n) {
-    aux <- 0
+    aux <- c(0, 0)
     for (k in 1:K) {
-      for (j in 1:(m-1)) {
-        aux <- aux - (y[m, j, k] - 1 + exp.eta[m, j, k])*(z[m, ,k] - z[j, , k]) 
+      if(m > 1){
+        for (j in 1:(m-1)) {
+          aux <- aux - (y[m, j, k] - 1 + exp.eta[m, j, k])*(z[m, ,k] - z[j, , k]) 
+        }
       }
-      
-      for (i in (m+1):n) {
-        aux <- aux + (y[i, m, k] - 1 + exp.eta[i, m, k])*(z[i, ,k] - z[m, , k])
+      if(m<n){
+        for (i in (m+1):n) {
+          aux <- aux + (y[i, m, k] - 1 + exp.eta[i, m, k])*(z[i, ,k] - z[m, , k])
+        }
       }
     }
     grad[m, , 1] <- 2*aux
@@ -183,17 +212,21 @@ gradient_g <- function(b, epsilon, y){
   
   # gradient for epsilon_k
   for (k in 1:K) {
-    aux <- 0
     for (m in 1:n) {
-      for (j in 1:(m-1)) {
-        aux <- aux - (y[m, j, k] - 1 + exp.eta[m, j, k])*(z[m, ,k] - z[j, , k]) 
+      aux <- c(0, 0)
+      if(m>1){
+        for (j in 1:(m-1)) {
+          aux <- aux - (y[m, j, k] - 1 + exp.eta[m, j, k])*(z[m, ,k] - z[j, , k]) 
+        }
       }
       
-      for (i in (m+1):n) {
-        aux <- aux + (y[i, m, k] - 1 + exp.eta[i, m, k])*(z[i, ,k] - z[m, , k])
+      if(m<n){
+        for (i in (m+1):n) {
+          aux <- aux + (y[i, m, k] - 1 + exp.eta[i, m, k])*(z[i, ,k] - z[m, , k])
+        }
       }
+      grad[m, , (k+1)] <- 2*aux
     }
-    grad[m, , (k+1)] <- 2*aux
   }
   
   # array (n vs 2 vs k+1)
@@ -254,17 +287,21 @@ update_beta <- function(b, epsilon, y, t, lambda){
 
 run.optimization <- function() {
   
-  n.steps <- 1000
+  n.steps <- 100
   
   # read y
+  y <- dummy.y()
   
   n <- dim(y)[1]
   K <- dim(y)[3]
   
-  b <- array(0, dim=c(n, 2))
-  epsilon <- array(0, dim=c(n, 2, K))
+  b <- array(runif(2*n), dim=c(n, 2))
+  epsilon <- array(runif(2*n, -0.5, 0.5), dim=c(n, 2, K))
   
   obj.value <- rep(0, n.steps)
+  
+  lambda <- 0.1
+  t <- 1
   
   for (s in 1:n.steps) {
     # evaluate objective function
@@ -278,4 +315,11 @@ run.optimization <- function() {
   
   plot(1:n.steps, obj.value, type='l', xlab='step', 
        ylab='Objective Function')
+  z <- array(b, dim=c(dim(b), K)) + epsilon
+  par(mfrow=c(2,2))
+  plot(z[,1,1],z[,2,1], main="K=1")
+  plot(z[,1,1],z[,2,2], main="K=1")
+  plot(z[,1,3],z[,2,3], main="K=1")
+  dev.off()
+
 }
