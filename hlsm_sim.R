@@ -1,9 +1,8 @@
 # This is where hlsm.stan is
 setwd("~/Documents/Research/hlsm")
 
-######################################
-# FUNCTIONS FOR GENERATING HLSM DATA #
-######################################
+
+            ##### FUNCTIONS FOR GENERATING HLSM DATA #####
 
 # Linearly scales a set of data points by the scalar 'm', along the axis 'dim'(="x"/"y")
 stretch <- function(x, m, dim="x"){
@@ -14,8 +13,7 @@ stretch <- function(x, m, dim="x"){
     return(x %*% M)
 }
 
-# # Looks good
-####### FUNCTION TESTS #######
+            ####### FUNCTION TESTS #######
 # plot(b, xlim=c(-2,2), ylim=c(-2,2))
 # points(stretch(b, 2, dim=c("x", "y")), col="red")
 # points(stretch(b, 2, dim="y"), col="blue")
@@ -36,9 +34,10 @@ rotate <- function(x, theta){
     f <- rotation.matrix(theta)
     return(f(x))
 }
-rotate.45 <- rotation.matrix(pi/4)
-rotate.60 <- rotation.matrix(pi/3)
-rotate.90 <- rotation.matrix(pi/2)
+
+# rotate.45 <- rotation.matrix(pi/4)
+# rotate.60 <- rotation.matrix(pi/3)
+# rotate.90 <- rotation.matrix(pi/2)
 
 ####### FUNCTION TESTS #######
 # plot(rotate.45(z)) # Yup!
@@ -46,7 +45,7 @@ rotate.90 <- rotation.matrix(pi/2)
 # points(rotate.90(z))
 
 
-logit <- function(x) 1/(1+exp(-x))
+invlogit <- function(x) 1/(1+exp(-x))
 
 # Takes the parameters of a latent space model and produces an adjacency matrix
 positions.to.matrix <- function(a, z){
@@ -57,7 +56,7 @@ positions.to.matrix <- function(a, z){
     #if(length(a)!=)
     for(i in 1:N){
         for(j in 1:N){
-            M[i,j] <- (logit(a - d[i,j]) > .5)+0
+            M[i,j] <- (invlogit(a - d[i,j]) > .5)+0
         }
     }
     return(M)
@@ -77,9 +76,8 @@ positions.to.multigraph <- function(Z, alpha=1){
 
 
 # (Functions for ...)
-#################################
-# Finding a good starting point #
-#################################
+##### Finding a good starting point #####
+
 
 # hlsm.init <- function(){
 #     list(alpha=c(1,1),
@@ -116,12 +114,12 @@ graph.error <- function(alpha, edges, z){
 
 find.alpha <- function(g, z){
     return(optimize(partial(graph.error, edges=g, z=z),
-                            lower=0, upper=20)$minimum)
-} # WORKS WHEN IT'S FIVE -- NOT ABOVE! WHAT THE WORTHLESS FUCK!
+                            lower=0, upper=5)$minimum)
+}
 
-a <- find.alpha(two.ovals[,,1], b)
-1-graph.accuracy(a, two.ovals[,,1], b) # THERE we go (but -- why not perfect? Oh, ovals.)
-plot.lsm(a, b) # what ... 
+# a <- find.alpha(two.ovals[,,1], b)
+# 1-graph.accuracy(a, two.ovals[,,1], b) # THERE we go (but -- why not perfect? Oh, ovals.)
+# plot.lsm(a, b) # what ... 
 
 # # DO IT OUT THE FUCK MANUALLY
 # out <- array(dim=100)
@@ -165,7 +163,6 @@ find.init <- function(m){
     }
     
     # AND CHOOSE THE RIGHT ALPHA #
-    ##############################
     # Now that we've RE-scaled
     
     alpha <- array(dim=(K)) # IS no alpha_b b/c no EDGES
@@ -180,15 +177,12 @@ find.init <- function(m){
     }
     return(init)
 }
-oval.init <- find.init(two.ovals)()
-plot.positions(oval.init$z, oval.init$b, oval.init$alpha) # 
-# Looks like it's ALL fucked up. K -- Hm. Fuck. 
+# oval.init <- find.init(two.ovals)()
+# plot.positions(oval.init$z, oval.init$b, oval.init$alpha) # 
 
 
 # (Functions for ...)
-################
-# RUNNING STAN #
-################
+##### RUNNING STAN #####
 
 library(latentnet)
 
@@ -230,9 +224,7 @@ one.shot <- function(edges, init, sigma, iter, file, model_name){
 
 
 # (Functions to ...)
-################################
-# EXAMINE THE ESTIMATED VALUES #
-################################
+##### EXAMINE THE ESTIMATED VALUES #####
 
 unpack.hlsm.fit <- function(fit, N, K, which="max"){
     # s <- summary(fit)$summary[,"mean"]
@@ -278,18 +270,6 @@ plot.lsm <- function(alpha, z, add=F, col="black", xlim=c(-2,2), ylim=c(-2,2)){
     }
 }
 
-# I NEED -- PLOT POSITIONS, plot.model calls that, and ... plot.multigraph
-# uses igraph, and input is just the -- something. 
-
-# This plots from a set of edges -- the graph itself. plot.model is for the estimate.
-plot.multigraph <- function(Z, alpha=5){
-    
-    
-    # plot.lsm(alpha, Z[,1,], add=F, col=1) # WATCH THE INDEXING HERE -- DID I CHANGE THIS?
-    # for(i in 2:dim(Z)[3]){
-    #     plot.lsm(1, Z[,2,], add=T, col=i)
-    # }
-}
 
 plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL){
     # First, make sure the plot is big enough
@@ -349,9 +329,10 @@ model.accuracy <- function(edges, z, alpha=NULL){ # ooh, optim!
         print(tbl)
     }
 }
-model.accuracy(two.ovals, two.ovals.model, two.ovals.model$theta$alpha) # after ...
-model.accuracy(two.ovals, two.ovals.positions, 1) # okay so, perfect ... 
-model.accuracy(two.ovals, ovals.init$z, ovals.init$alpha)
+
+# model.accuracy(two.ovals, two.ovals.model, two.ovals.model$theta$alpha) # after ...
+# model.accuracy(two.ovals, two.ovals.positions, 1) # okay so, perfect ... 
+# model.accuracy(two.ovals, ovals.init$z, ovals.init$alpha)
 
 
 # Draw little gray dotted lines between versions of the same node
@@ -371,34 +352,26 @@ plot.errors <- function(z, b){
         }
     }
 }
-plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
+#plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
+
+
+#sigma <- function(x) 1/(1+exp(-x))
+L22 <- function(x) sum(x^2) 
 
 # gotta RE-run, becaue # gotta RE-run, because I changed the name
 # of the parameters, z.hat => theta. Fuckin' ...
 # model.accuracy(two.circles, two.circles.model)
 
-#######################################################
-# SETTING PARAMETERS CREATING DATA AND RUNNING MODELS #
-#######################################################
+
+##### SETTING PARAMETERS CREATING DATA AND RUNNING MODELS #####
 
 library(rstan)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
 
 
-############
-# THE DATA #
-############
 
-# library(igraph)
-# out <- positions.to.matrix(stretch(b, 3), a=1) # moderate clustering at 2, serious at 3
-# plot(graph_from_adjacency_matrix(out)) # sure, not bad
-
-
-# # # # # # # # # # # # # # # 
-##############################
-# RUNNING AND TESTING GRAPHS #
-##############################
+##### INIT #####
 
 N <- 20
 circle <- seq(0,2*pi,length=N)
@@ -409,13 +382,14 @@ sigma <- 10
 
 library(abind)
 library(igraph)
+source('anticrustes.r') # necessary for find.init
+
+# plot.lsm(1, b)
+# plot.lsm(1, stretch(b, 2, dim="x"), add=T, col=2)
+# plot.lsm(1, stretch(b, 2, dim="y"), add=T, col=4)
+# plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 # TWO ORTHOGONAL OVALS
-plot.lsm(1, b)
-plot.lsm(1, stretch(b, 2, dim="x"), add=T, col=2)
-plot.lsm(1, stretch(b, 2, dim="y"), add=T, col=4)
-plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
-
 two.ovals.positions <- aperm(abind(stretch(b, 2, dim="x"),
                                    stretch(b, 2, dim="y"), along=3),
                              c(1,3,2))
@@ -423,48 +397,40 @@ two.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="x"),
                                           stretch(b, 2, dim="y")))
 plot.errors(two.ovals.positions, b) # Good!
 
-plot(graph_from_adjacency_matrix(two.ovals[,,1]))
-plot(graph_from_adjacency_matrix(two.ovals[,,2])) 
-ovals.init <- find.init(two.ovals)
-
-model.accuracy(two.ovals, ovals.init()$z, ovals.init()$alpha) # Before: not BAD, 
-model.accuracy(two.ovals, two.ovals.model$theta$z, two.ovals.model$theta$alpha) # WORSE
+#plot(graph_from_adjacency_matrix(two.ovals[,,1]))
+#plot(graph_from_adjacency_matrix(two.ovals[,,2])) 
 
 # SOME TESTS WITH -- REDUCING SIGMA. Issue, though, is -- how many iterations?
-ovals.init <- find.init(two.ovals) # done outside so you can plot them
+ovals.init <- find.init(two.ovals)() # done outside so you can plot them
 plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
 
-two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 2e4, # 4e3 not enough ... 2e4?
-                            "hlsm.stan", "two_ovals")
-plot.model(two.ovals.model, alpha=.3)
+
+
+##### FITTING #####
+# two.ovals.model <- one.shot(two.ovals, ovals.init, .025, 4e4,
+#                             "hlsm.stan", "two_ovals")
+# plot.model(two.ovals.model)
+# plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
+
+
+
+
 
 # AND NOW WITH THE TRUE PARAMETERS
-true.theta <- function()(list(a=c(1,1), b=b, z=two.ovals.positions))
-two.ovals.true.model <- one.shot(two.ovals, true.theta, .05, 2e4,
-                                 "hlsm.stan", "two_ovals_true")   
-
-traceplot(two.ovals.model$fit) # I've never seen the z/e plots -- 
-# Also, gotta do better than the ... 
-plot.model(two.ovals.true.model, alpha=.5, which="max")
-
-
-# WHY ARE THEY ALL ON THAT FUCKIN DIAGONAL? Am I even DOING this right?
-plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
-
-# Hm ... LOOKS good, but the errors are shitty. Hm ... procrustes might be the wrong
-# transpose. I don't want to match the shape, I want to match the node positions --
-# is it doing that? How do I minimize the distances between THEM?
+# true.theta <- function()(list(a=c(1,1), b=b, z=two.ovals.positions))
+# two.ovals.true.model <- one.shot(two.ovals, true.theta, .025, 2e4,
+#                                  "hlsm.stan", "two_ovals_true")   
+# plot.model(two.ovals.true.model, alpha=.5, which="max")
+# plot.errors(two.ovals.true.model$theta$z, two.ovals.true.model$theta$b)
+# 
+# traceplot(two.ovals.model$fit) # I've never seen the z/e plots -- 
+# model.accuracy(two.ovals, ovals.init()$z, ovals.init()$alpha) # Before: not BAD, 
+# model.accuracy(two.ovals, two.ovals.model$theta$z, two.ovals.model$theta$alpha) # WORSE
+# plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 # PLOT THE INIT POSITIONS, TOO
 # MAKE MOVES (coord-wise, x/y)
-# VISUAL MOVES
-
-my.transform <- function(){
-    # Rotate, until you min distances between original points
-    # translate, for same
-    # Is this the same as procrustes? Should look it up --
-    # ALSO -- coordinate descent/convexity for LSMs in general
-}
+# VISUALIZE MOVES
 
 
 
@@ -479,204 +445,6 @@ my.transform <- function(){
 
 
 
-# uniroot! What a great name!
-
-sigma <- function(x) 1/(1+exp(-x))
-L22 <- function(x) sum(x^2) 
-
-# For speed, I should check -- this against other things
-build.b.fxn <- function(y, a, b, e, i, axis){
-    f <- function(x){
-        total <- 0
-        for(j in (1:N)[-i]){ # Does this even matter? As long as the intercept's consistent
-            for(k in 1:K){
-                bi <- b[i,]
-                bi[axis] <- x
-                
-                d <- bi + e[i,k,] - b[j,] - e[j,k,]
-                r <- sigma(a - L22(d)) - y[i,j,k] # This should be a scalar
-                
-                total <- total + r*sqrt(L22(d)) # right, THIS. Fuck. Kay ... d is the problem
-                
-            }
-        }
-        return(total)
-    }
-    return(f)
-}
-
-build.e.fxn <- function(y, a, b, e, i, k, axis, l){
-    f <- function(x){
-        total = 0
-        for(j in (1:N)[-i]){ # Does this even matter? As long as the intercept's consistent
-            eik <- e[i,k,]
-            eik[axis] <- x
-            d <- b[i,] + eik - b[j,] - e[j,k,]
-            r <- sigma(a - L22(d)) - y[i,j,k]
-            total <- total + r*sqrt(L22(d))
-        }
-        return(total) # add the interval +/-lambda when trying to solve, outside
-    }
-    return(f)
-}
-
-lkhd <- function(y, a, b, e, l){
-    total <- 0
-    N <- dim(y)[1]
-    K <- dim(y)[3]
-    for(k in 1:K){
-        for(i in 1:N){
-            for(j in 1:N){
-                s <- sigma(a[k] - L22(b[i,] + e[i,k,] - b[j,] - e[j,k,]))
-                y. <- y[i,j,k]    
-                total <- total + s^y.*(1-s)^(1-y.)
-            }
-        }
-    }
-    total <- total - l*sum(abs(e)) # right -- subtract, for max (REMEMBER IT'S MAX)
-    return(total)
-}
-
-coord.opt <- function(y, a, b, e, l, maxit=1){
-
-    b.mle <- array(dim=dim(b))
-    e.mle <- array(dim=dim(e))
-    mle <- -Inf
-    
-    iter <- 1
-    lkhd <- array(dim=maxit)
-    while(iter < maxit){ # Also a convergence criterion -- what? 
-        # For each layer, first update the layer, then the base
-        for(k in 1:K){ 
-            # update the b_i
-            for(i in 1:N){
-                for(axis in 1:2){
-                    f.bi <- build.b.fxn(y, a[k], b, e, i, axis)
-                    
-                    
-                    # THIS SHOULD BE ROOT FINDING BUT ITS NOT WORKING
-                    
-                    # FIND INTERVAL? With a line search? (Just -- use the line search?)
-                    # ALSO, these will be a lot easier to search with scaled versions.
-                    # SO -- work on scaling. Fuck. 
-                    # 
-                    # tryCatch({
-                    #     obj.vals <- array(dim=1000)
-                    #     vals <- seq(-20,20,length=1000)
-                    #     for(v.i in 1:1000){
-                    #         obj.vals[v.i] <- f.bi(vals[v.i])
-                    #     }
-                    #     lower <- vals[which.min(obj.vals)]
-                    #     upper <- vals[which.max(obj.vals)]
-                    #     print(lower)
-                    #     print(upper)
-                    #     bi.star <- uniroot(f.bi, c(lower,upper), extendInt = "yes")$root#bi.star <- uniroot(f.bi, c(0,.), extendInt = "yes")$root#bi.star <- uniroot(f.bi, c(0,.), extendInt = "yes")$root
-                    # })
-                    
-                    # bi.star <- optimize(f.bi, c(-20,20))$minimum
-                    
-                    b[i,axis] <- bi.star
-                }
-            }
-            # update the e_ik
-            for(i in 1:N){
-                for(axis in 1:2){
-                    f.eik <- build.e.fxn(y, a[k], b, e, i, k, l, axis)
-                    # eik.star <- uniroot(f.eik, c(9,10), extendInt = "downX")$root
-                    # eik.star <- optimize(f.eik, c(-20,20))$minimum
-
-                    eik.star <- 0
-                    for(v in seq(-20,10,length=1000)){
-                        val <- f.eik(v)
-                        if((-lambda < val) & (val < lambda)){
-                            eik.star <- v
-                            break
-                        }
-                    }
-                    # obj.min <- Inf
-                    # eik.star <- NULL
-                    # for(v in seq(-20,20,length=1000)){
-                    #     obj.val <- f.eik(v)
-                    #     if(obj.val < obj.min){
-                    #         obj.min <- obj.val
-                    #         eik.star <- v
-                    #     }
-                    #     if(obj.val > -l & obj.val < l){ # if v \in [-lambda, lambda]
-                    #         eik.star <- 0
-                    #         break
-                    #     }
-                    # }
-                    e[i,k,axis] <- eik.star
-                    
-                }
-            }
-        }
-        
-        lkhd[iter] <- lkhd(y, a, b, e, l)
-        if(lkhd[iter] > mle){
-            mle <- lkhd[iter]
-            b.mle <- b
-            e.mle <- e
-        }
-        
-        iter <- iter + 1
-    }
-    theta <- list(a=a, b=b.mle, e=e.mle, l=l, lkhd=lkhd)
-    return(theta)
-}
-
-
-# THERE IS no 'e' variable right now -- e = z - b, but the indices are a little tricky
-a  <- ovals.init()$alpha
-b. <- ovals.init()$b # CAREFUL -- don't overwrite the REAL b
-z  <- ovals.init()$z
-e  <- array(dim=c(N,K,2))
-for(k in 1:K){
-    e[,k,] <- z[,k,] - b.
-}
-lambda <- 1
-f.bi  <- build.b.fxn(two.ovals, 1, b, e, 1, 1)
-f.eik <- build.e.fxn(two.ovals, 1, b, e, 1, 1, 1, 1) # fuck, can be maximixed (~11)
-
-out <- optimize(f.bi, c(0,20)) # except THAT was ok -- hm, got the edge though -- 
-
-plot(sapply(-10:10, f.bi)) # hm -- negative forever? Oh also, MAX OR MIN?
-# ... isn't what what I'm trying do -- do what with, now?
-ur <- uniroot(f.bi, c(-3,0), extendInt = "yes") # WHAT THE FUCK, UNIROOT
-ur$root
-
-
-abline(h=0)
-out$minimum # what ... .47 ? oh it does it by INDEX .. wait now ... oh btwn 1/2. Yes!
-
-f.eik(-1) # ah, makes a VECTOR -- hm. f.bi(0) # ah, makes a VECTOR -- hm. 
-
-source("/path/to/file/my_fn_lib1.r")
-
-
-# I should really check -- all sorts of things. lkhd, accuracy, effectiveness
-# of the individual optimizations ... BUT, it looks like it's RUNNING. At least.
-
-# with lambda=1, everything got zeroed out. Dropping to .1.
-out <- coord.opt(two.ovals, a, b., e, 1, maxit=20) # FUCK. What is it and why? 'a'.
-# okay, it's -- ... all over the place but SOME are high, get the BEST. Right.,
-
-# mother fuck -- it appears to have ... is the penalty on backwards? Back up, asshole.
-
-
-# Okay well now, it's all OVER the fucking place. K -- fuck. Need to back up,
-# commit, and try again. Fuck.
-plot(out$lkhd) # IT IS INCREASING. LET'S SEE HOW LONG. (Does it plateau?) 
-
-# Hm -- peaked soon, then -- dropped precipitously. Hm. K. What was happening?
-# WHAT'S HAPPENING WITH ACCURACY?
-plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
-z.out  <- array(dim=c(N,K,2))
-for(k in 1:K){
-    z.out[,k,] <- out$b + out$e[,k,]
-}
-plot.positions(z.out, out$b, .4) # COMPLETELY fucked
-plot.errors(z.out, out$b) 
 
 
 
@@ -688,195 +456,178 @@ plot.errors(z.out, out$b)
 
 
 
-
-
-# plot.multigraph(two.ovals.model$theta$z)
-# z.hat <- unpack.hlsm.fit(three.ovals.model$fit, N, 3)
-
-m <- two.ovals.model
-plot.positions(m$theta$z, m$theta$b, alpha=10)
-
-# OKAY -- take a BUNCH, do them all ... except, fuckin ... fuck.
-# 'model' should be 'parameters,' no, 'positions,' plot 'fit' maybe? That's positions.
-plot.positions(two.ovals.positions, b, alpha=.1) # what the fuck ... 
-
-
-
-
-
-
-
-
-# THREE ~ORTHOGONAL OVALS
-three.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="y"),
-                                            rotate(stretch(b, 2, dim="y"), pi/3),
-                                            rotate(stretch(b, 2, dim="y"),-pi/3)))
-three.ovals.model <- one.shot(three.ovals, sigma, "hlsm.stan", "three_ovals", niter)
 # 
-plot.model(three.ovals.model, alpha=c(.12, .1, .12), # ... blue?
-           xlim=c(-1,1), ylim=c(-1,1)) # oh VERY interesting -- what the hell?
-plot.multigraph(z.hat$z) # -- what
-plot.lsm(1, z.hat$z[,,1])
-
-
-
-
-
-
-# For the L1 test -- lambda?
-# TWO CONCENTRIC CIRCLES
-two.circles <- positions.to.multigraph(list(stretch(b, 2, dim=c("x", "y")),
-                                            b))
-two.circles.model <- one.shot(two.circles, sigma, "hlsm.stan", "two_circles", niter)
-
-two.overlapping.circles   <- positions.to.multigraph(list(b, b))
-two.ovlp.circles.model   <- one.shot(two.overlapping.circles,  sigvec, "hlsm_lasso.stan", "two_ovlp_circles",    1e3)
-#three.ovlp.circles.model <- one.shot(three.ovlp.circles, sigvec, "hlsm_lasso.stan", "three_ovlp__circles", 2e4)
-
-
-three.overlapping.circles <- positions.to.multigraph(list(b, b, b))
-
-
-
-
-
-
-
-
-# What's ONE of these -- 
-K <- 2
-sigma <- 10
-sigmat <- array(0, dim=c(K,2,2))
-sigmat[,1,1] <- sigma
-sigmat[,2,2] <- sigma
-hlsm.data <- list(N=N,
-                  K=K,
-                  edges=edges,     # make sure these are ints  (not bool) else FLATTENED
-                  sigma_alpha=10,   # NO idea what these should be, using mvlsm's
-                  mu_b=c(0,0),
-                  sigma_b=sigma*diag(2), # [s   0; 0   s] (one matrix)
-                  sigma_z=sigmat)        # [s_k 0; 0 s_k] (one matrix per layer)
-
-hlsm.data[["edges"]]   <- two.ovals
-hlsm.data[["sigma_z"]] <- sigmat
-hlsm.init <- find.init(two.ovals) # MAYBE THE PROBLEM ? TRY SIMPLER!
-plot.positions(hlsm.init()$z, b, 1) # This looks not too damn bad. What goes wrong?
-# How about -- plot over time? Do them one by one, watch the sampling progress?
-two.circles.fit <- stan(file="hlsm.stan",
-                        model_name="hlsm_sim_two_ovals",
-                        iter=2e4,
-                        data=hlsm.data, init=hlsm.init,
-                        verbose=T, control=list(max_treedepth = 15))
-# BEWARE: These are only defined BELOW. Will need to shuffle everything.
-zhat <- unpack.hlsm.fit(two.circles.fit, N, K, which="max")
-plot.positions(zhat$z, b, alpha=2)
-#plot.multigraph(zhat$z, zhat$b, alpha=5)
-
-
-
-
-
-
-
-
-
-#########################################
-#########################################
-# THE DUMP -- old tests, bad ideas, etc #
-#########################################
-#########################################
-
-plot.model(two.ovals.model, which="mean") # what the fuck ... what the FUCK though.
-plot.model(two.ovals.model, which="min") # the best (min?)
-plot.model(two.ovals.model, which="last") # the last
-
-
-# BARBELLS AND ROTATIONS -- maybe not very clear thinking
-# The sparse path connecting the dense ends
-w <- cbind(0.5*0:12-3, rep(0,13))
-# The two dense barbell ends
-x <- mvrnorm(10, mu=c(-3,0), Sigma=array(c(.1,0,0,.1), dim=c(2,2)))
-y <- mvrnorm(10, mu=c(3,0),  Sigma=array(c(.1,0,0,.1), dim=c(2,2)))
-z <- rbind(w,x,y)
-plot(z)
-
-
-#####################################
-# Finding a good starting point 0.1 #
-#####################################
-# Better idea was to use latentnet itself -- MDS necessary, if you don't HAVE that.
-library(MASS) # thought that was automatic (loads isoMDS)
-# Sum the edges
-summed.edges <- apply(edges, MARGIN=1:2, sum) # THERE; also still symmetric
-d <- 1/summed.edges
-d[!is.finite(d)] <- 5 # Because. The biggest value in summed.edges = 5.
-mds <- isoMDS(as.matrix(d), k=2) # converged! That's good news -- 
-
-hlsm.init <- function(){
-    # alpha, b, and z; using mds$points
-    z <- array(dim=c(N,K,2)) # defined above
-    for(k in 1:K)
-        z[,k,] <- lsm$mcmc.pmode$Z #mds$points
-    list(alpha=rnorm(K), z=z, b=lsm$mcmc.pmode$Z) #mds$points
-}
-
-
-
-# ALL THIS WAS A GOOD FIRST TEST, BUT I DON'T NEED IT NOW --
-# Two ovals of data, at 90 degrees to one another. Hope to infer a circle of base positions
-edges <- array(dim=c(N,N,K))
-
-# How do you stack 2d structures? ALONG=3 (below)
-# https://stackoverflow.com/questions/14857358/stacking-array-slices-rbind-for-2-dimensions
-library(abind)
-# Again, this isn't ... fuckin, exactly like the DGP, is it. Fuckin' ...
-positions <- abind(stretch(b, 3, dim="x"),
-                   stretch(b, 3, dim="y"), along = 3)
-for(i in 1:2){
-    edges[,,i] <- positions.to.matrix(positions[,,i], a=1)
-}
-
-
-
-fit.20k <- stan(file="hlsm.stan",
-             model_name="hlsm_sim",
-             data=hlsm.data,
-             init=hlsm.init,
-             iter=2e4,
-             verbose=T,
-             control=list(max_treedepth = 15)) # from 10, as suggested
-# 2k was lousy, 5k better-looking (complete eyeball of the traceplot) 20k -- LOOKS ok
-# fit.2k <- fit
-# fit <- fit.20k
-# save(fit, file="hlsm_sim_fit_20k.Rdata")
-# zhat.table <- summary(fit)$summary[,"mean", drop=F]
-
-# And finally, plot to check
-ghat.1 <- positions.to.matrix(.01, zhat$z[,1,])
-ghat.2 <- positions.to.matrix(.01, zhat$z[,2,])
-ghat.b <- positions.to.matrix(.01, zhat$b)
-
-# plot(graph_from_adjacency_matrix(out)) # it's -- a big fat ball. Okay both are.
-# WAIT -- interesting -- if I just MAKE alpha=5, I get ~ the right answer
-# (if, remember, I also initialized it that way. Wait did I?)
-plot(graph_from_adjacency_matrix(positions.to.matrix(1, b)))
-
-# ~Classification accuracies
-# What happened to 'edges'? It's not a table anymore
-table(as.vector(ghat.1), as.vector(edges[,,1])) # NOT TERRIBLE!
-table(as.vector(ghat.2), as.vector(edges[,,2])) # NOT TERRIBLE! ALSO!
-table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=1))) # Seriously not bad
-# Now try tuning with alpha, maybe? And why was it so high?
-# Also, try with initialization values that aren't cheating.
-
-
-out <- array(dim=20)
-vals <- seq(0, 5, length=20)
-for(i in 1:20){
-    cm <- table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=vals[i]))) 
-    out[i] <- sum(diag(cm))/sum(cm)
-}
-plot(out, xaxt="n")
-axis(1, at=1:20, labels=round(vals,2)) # Okay so yes, peaks around 1; why estimate=20?
-
-
+# # plot.multigraph(two.ovals.model$theta$z)
+# # z.hat <- unpack.hlsm.fit(three.ovals.model$fit, N, 3)
+# 
+# m <- two.ovals.model
+# plot.positions(m$theta$z, m$theta$b, alpha=10)
+# 
+# # OKAY -- take a BUNCH, do them all ... except, fuckin ... fuck.
+# # 'model' should be 'parameters,' no, 'positions,' plot 'fit' maybe? That's positions.
+# plot.positions(two.ovals.positions, b, alpha=.1) # what the fuck ... 
+# 
+# 
+# 
+# # THREE ~ORTHOGONAL OVALS
+# three.ovals <- positions.to.multigraph(list(stretch(b, 2, dim="y"),
+#                                             rotate(stretch(b, 2, dim="y"), pi/3),
+#                                             rotate(stretch(b, 2, dim="y"),-pi/3)))
+# three.ovals.model <- one.shot(three.ovals, sigma, "hlsm.stan", "three_ovals", niter)
+# # 
+# plot.model(three.ovals.model, alpha=c(.12, .1, .12), # ... blue?
+#            xlim=c(-1,1), ylim=c(-1,1)) # oh VERY interesting -- what the hell?
+# plot.multigraph(z.hat$z) # -- what
+# plot.lsm(1, z.hat$z[,,1])
+# 
+# 
+# # For the L1 test -- lambda?
+# # TWO CONCENTRIC CIRCLES
+# two.circles <- positions.to.multigraph(list(stretch(b, 2, dim=c("x", "y")),
+#                                             b))
+# two.circles.model <- one.shot(two.circles, sigma, "hlsm.stan", "two_circles", niter)
+# 
+# two.overlapping.circles   <- positions.to.multigraph(list(b, b))
+# two.ovlp.circles.model   <- one.shot(two.overlapping.circles,  sigvec, "hlsm_lasso.stan", "two_ovlp_circles",    1e3)
+# #three.ovlp.circles.model <- one.shot(three.ovlp.circles, sigvec, "hlsm_lasso.stan", "three_ovlp__circles", 2e4)
+# 
+# 
+# three.overlapping.circles <- positions.to.multigraph(list(b, b, b))
+# 
+# 
+# 
+# 
+# # What's ONE of these -- 
+# K <- 2
+# sigma <- 10
+# sigmat <- array(0, dim=c(K,2,2))
+# sigmat[,1,1] <- sigma
+# sigmat[,2,2] <- sigma
+# hlsm.data <- list(N=N,
+#                   K=K,
+#                   edges=edges,     # make sure these are ints  (not bool) else FLATTENED
+#                   sigma_alpha=10,   # NO idea what these should be, using mvlsm's
+#                   mu_b=c(0,0),
+#                   sigma_b=sigma*diag(2), # [s   0; 0   s] (one matrix)
+#                   sigma_z=sigmat)        # [s_k 0; 0 s_k] (one matrix per layer)
+# 
+# hlsm.data[["edges"]]   <- two.ovals
+# hlsm.data[["sigma_z"]] <- sigmat
+# hlsm.init <- find.init(two.ovals) # MAYBE THE PROBLEM ? TRY SIMPLER!
+# plot.positions(hlsm.init()$z, b, 1) # This looks not too damn bad. What goes wrong?
+# # How about -- plot over time? Do them one by one, watch the sampling progress?
+# two.circles.fit <- stan(file="hlsm.stan",
+#                         model_name="hlsm_sim_two_ovals",
+#                         iter=2e4,
+#                         data=hlsm.data, init=hlsm.init,
+#                         verbose=T, control=list(max_treedepth = 15))
+# # BEWARE: These are only defined BELOW. Will need to shuffle everything.
+# zhat <- unpack.hlsm.fit(two.circles.fit, N, K, which="max")
+# plot.positions(zhat$z, b, alpha=2)
+# #plot.multigraph(zhat$z, zhat$b, alpha=5)
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# ##### THE DUMP -- old tests, bad ideas, etc #####
+# 
+# plot.model(two.ovals.model, which="mean") # what the fuck ... what the FUCK though.
+# plot.model(two.ovals.model, which="min") # the best (min?)
+# plot.model(two.ovals.model, which="last") # the last
+# 
+# 
+# # BARBELLS AND ROTATIONS -- maybe not very clear thinking
+# # The sparse path connecting the dense ends
+# w <- cbind(0.5*0:12-3, rep(0,13))
+# # The two dense barbell ends
+# x <- mvrnorm(10, mu=c(-3,0), Sigma=array(c(.1,0,0,.1), dim=c(2,2)))
+# y <- mvrnorm(10, mu=c(3,0),  Sigma=array(c(.1,0,0,.1), dim=c(2,2)))
+# z <- rbind(w,x,y)
+# plot(z)
+# 
+# 
+# 
+# # Finding a good starting point 0.1 #
+# 
+# # Better idea was to use latentnet itself -- MDS necessary, if you don't HAVE that.
+# library(MASS) # thought that was automatic (loads isoMDS)
+# # Sum the edges
+# summed.edges <- apply(edges, MARGIN=1:2, sum) # THERE; also still symmetric
+# d <- 1/summed.edges
+# d[!is.finite(d)] <- 5 # Because. The biggest value in summed.edges = 5.
+# mds <- isoMDS(as.matrix(d), k=2) # converged! That's good news -- 
+# 
+# hlsm.init <- function(){
+#     # alpha, b, and z; using mds$points
+#     z <- array(dim=c(N,K,2)) # defined above
+#     for(k in 1:K)
+#         z[,k,] <- lsm$mcmc.pmode$Z #mds$points
+#     list(alpha=rnorm(K), z=z, b=lsm$mcmc.pmode$Z) #mds$points
+# }
+# 
+# 
+# 
+# # ALL THIS WAS A GOOD FIRST TEST, BUT I DON'T NEED IT NOW --
+# # Two ovals of data, at 90 degrees to one another. Hope to infer a circle of base positions
+# edges <- array(dim=c(N,N,K))
+# 
+# # How do you stack 2d structures? ALONG=3 (below)
+# # https://stackoverflow.com/questions/14857358/stacking-array-slices-rbind-for-2-dimensions
+# library(abind)
+# # Again, this isn't ... fuckin, exactly like the DGP, is it. Fuckin' ...
+# positions <- abind(stretch(b, 3, dim="x"),
+#                    stretch(b, 3, dim="y"), along = 3)
+# for(i in 1:2){
+#     edges[,,i] <- positions.to.matrix(positions[,,i], a=1)
+# }
+# 
+# 
+# 
+# fit.20k <- stan(file="hlsm.stan",
+#              model_name="hlsm_sim",
+#              data=hlsm.data,
+#              init=hlsm.init,
+#              iter=2e4,
+#              verbose=T,
+#              control=list(max_treedepth = 15)) # from 10, as suggested
+# # 2k was lousy, 5k better-looking (complete eyeball of the traceplot) 20k -- LOOKS ok
+# # fit.2k <- fit
+# # fit <- fit.20k
+# # save(fit, file="hlsm_sim_fit_20k.Rdata")
+# # zhat.table <- summary(fit)$summary[,"mean", drop=F]
+# 
+# # And finally, plot to check
+# ghat.1 <- positions.to.matrix(.01, zhat$z[,1,])
+# ghat.2 <- positions.to.matrix(.01, zhat$z[,2,])
+# ghat.b <- positions.to.matrix(.01, zhat$b)
+# 
+# # plot(graph_from_adjacency_matrix(out)) # it's -- a big fat ball. Okay both are.
+# # WAIT -- interesting -- if I just MAKE alpha=5, I get ~ the right answer
+# # (if, remember, I also initialized it that way. Wait did I?)
+# plot(graph_from_adjacency_matrix(positions.to.matrix(1, b)))
+# 
+# # ~Classification accuracies
+# # What happened to 'edges'? It's not a table anymore
+# table(as.vector(ghat.1), as.vector(edges[,,1])) # NOT TERRIBLE!
+# table(as.vector(ghat.2), as.vector(edges[,,2])) # NOT TERRIBLE! ALSO!
+# table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=1))) # Seriously not bad
+# # Now try tuning with alpha, maybe? And why was it so high?
+# # Also, try with initialization values that aren't cheating.
+# 
+# 
+# out <- array(dim=20)
+# vals <- seq(0, 5, length=20)
+# for(i in 1:20){
+#     cm <- table(as.vector(ghat.b), as.vector(positions.to.matrix(b, a=vals[i]))) 
+#     out[i] <- sum(diag(cm))/sum(cm)
+# }
+# plot(out, xaxt="n")
+# axis(1, at=1:20, labels=round(vals,2)) # Okay so yes, peaks around 1; why estimate=20?
+# 
+# 
