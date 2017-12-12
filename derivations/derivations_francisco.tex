@@ -88,5 +88,26 @@ Finally, our complete objective function is to minimize the sum between the nega
 
 where $\|.\|$ represents the L2 norm. Since this is not differentiable, we could use proximal gradient descent. If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
 
+The proximal operator for the penalty term using the L2 norm\footnotemark~ is:
+
+\footnotetext{According to the results on Homework 3}
+
+\[
+\text{prox}_{\|.\|, t}(\epsilon_{i,k}) = 
+\begin{cases}
+\frac{\|\epsilon_{i,k}\| - \lambda t}{\|\epsilon_{i,k}\|}\epsilon_{i,k}, & \|\epsilon_{i,k}\| \ge \lambda t \\
+0, & \|\epsilon_{i,k}\| < \lambda t
+\end{cases}
+\]
+
+\[
+\text{prox}_{\|.\|, t}(b_i) = b_i
+\]
+
+Therefore, let $\beta$ be the vector with all parameters $\epsilon$ and $b$. The Proximal Gradient Descent method in this case is:
+
+\[
+\beta^{+} = \text{prox}_{\|.\|, t}(\beta - t \nabla \ell(\beta))
+\]
 
 \end{document}  

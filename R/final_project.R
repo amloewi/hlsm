@@ -251,11 +251,14 @@ generalized_grad <- function(b, epsilon, y, t, lambda){
   beta[ , , 1] <- b
   beta[ , , 2:(K+1)] <- epsilon
   
-  grad_g = gradient_g(b, epsilon, y)
+  grad_g <- gradient_g(b, epsilon, y)
   
-  beta1 = beta - t*grad_g
+  beta1 <- beta - t*grad_g
   
-  gen_grad = (1/t) * (beta - proximal_op(b, epsilon, t, lambda))
+  b1 <- beta1[ , , 1]
+  epsilon1 <- beta1[ , , 2:(K+1)]
+  
+  gen_grad = (1/t) * (beta - proximal_op(b1, epsilon1, t, lambda))
   
   return(gen_grad)
 }
