@@ -89,9 +89,6 @@ positions.to.multigraph <- function(Z, alpha=1){
 
 library(expm) # has 'sqrtm'
 procrustean <- function(z, z.0){
-    # REQUIRES CENTERING
-    z   <- scale(z, scale=F)
-    z.0 <- scale(z.0, scale=F)
     Re(z.0 %*% t(z) %*% solve(sqrtm(z %*% t(z.0) %*% z.0 %*% t(z))) %*% z)
 }
 
@@ -100,10 +97,10 @@ procrustean <- function(z, z.0){
 # y <- stretch(b, 2, dim='y')
 # plot.lsm(1, y, col=2, add=T)
 # procrusted <- procrustean(x, y)
-# plot.lsm(1, procrusted, col=2, add=T) # THERE WE FUCKIN GO
+# plot.lsm(1, procrusted, col=2, add=T) # WORKS -- but is not the transform we need.
 
 
-graph.accuracy <- function(alpha, edges, z){
+graph.error <- function(alpha, edges, z){
     # REMOVE THIS -- maybe it's fucking with optim?
 #    if(is.null(alpha))
 #        alpha <- 1
@@ -118,9 +115,10 @@ graph.accuracy <- function(alpha, edges, z){
 }
 
 find.alpha <- function(g, z){
-    return(optimize(partial(graph.accuracy, edges=g, z=z),
-                            lower=0, upper=5)$minimum)
+    return(optimize(partial(graph.error, edges=g, z=z),
+                            lower=0, upper=20)$minimum)
 } # WORKS WHEN IT'S FIVE -- NOT ABOVE! WHAT THE WORTHLESS FUCK!
+
 a <- find.alpha(two.ovals[,,1], b)
 1-graph.accuracy(a, two.ovals[,,1], b) # THERE we go (but -- why not perfect? Oh, ovals.)
 plot.lsm(a, b) # what ... 
@@ -138,7 +136,7 @@ plot.lsm(a, b) # what ...
 
 
 
-library(purrr)
+library(purrr) # partial()
 # Do a separate lsm for each layer (making sure it)
 # - has the right alpha => optim,
 # - is the right scale for alpha=5
@@ -148,27 +146,23 @@ find.init <- function(m){
     K <- dim(m)[3]
     avg <- (apply(m, MARGIN=1:2, sum) > 0) + 0    # init failed with K=3; round=>0?
     lsm.avg <- ergmm(network(avg) ~ euclidean(d=2)^2) # Squared?
-    z.avg <- lsm.avg$mcmc.mle$Z # .pmode v .mle? # 92 EDGES? 
-    a.avg <- summary(lsm.avg)$pmean$coef.table[1]$Estimate # jesus christ, latentnet
-    # I should at least see if this matches with the -- optimal one.
-    # Oh but, I'll need a new one anyway, if I -- re-scale.
-        
+    z.avg <- lsm.avg$mcmc.mle$Z # .pmode v .mle? # 92 EDGES?
+    # a.avg <- summary(lsm.avg)$pmean$coef.table[1]$Estimate # jesus christ, latentnet
+     
+    # NOW SCALE s.t. b has unit radius
+    bounds <- apply(z.avg, 2, range)          # => x/y.min, x/y.max
+    z.scale <- max(bounds[2,] - bounds[1,])/2 # => finds the max (AXIS ALIGNED) diameter
+    z.avg <- z.avg * 1/z.scale                # (notice though, divide by HALF diam.)
+    z.avg <- scale(z.avg, scale=F)            # and center
+       
     z <- array(dim=c(N,K,2))    
     for(k in 1:K){
         lsm.k <- ergmm(network(m[,,k]) ~ euclidean(d=2)^2)
-        z.k <- lsm.k$mcmc.mle$Z # pmode v. mle? # 92 EDGES? 
-        a.k <- summary(lsm.k)$pmean$coef.table[1]$Estimate # jesus christ, latentnet
-        # Not quite done yet!
-        z.k <- procrustean(z.k, z.avg) 
+        z.k <- lsm.k$mcmc.mle$Z
+        # a.k <- summary(lsm.k)$pmean$coef.table[1]$Estimate
+        z.k <- anticrustean(z.k, z.avg) # Nobody expects anticrustes!
         z[,k,] <- z.k
     }
-    
-    # NOW SCALE
-    # scale <- max(abs(range(z.avg)))
-    bounds <- apply(z.avg, 2, range)
-    scale <- max(bounds[2,] - bounds[1,])/2
-    z.avg <- z.avg * 1/scale
-    z     <- z     * 1/scale
     
     # AND CHOOSE THE RIGHT ALPHA #
     ##############################
@@ -181,21 +175,15 @@ find.init <- function(m){
         alpha[k] <- find.alpha(m[,,k], z[,k,])
     }
     
-    # FUCK -- if I don't have alpha anymore (or should I just fuckin' keep it)
-    # THEN I -- need to tune the SCALE, to maximize representation. Hm. Fuck.
-
     init <- function(){
-        # z <- array(dim=c(N,K,2))
-        # for(k in 1:K)
-        #     z[,k,] <- z.hat
         return(list(alpha=alpha, z=z, b=z.avg, lsm=lsm.avg))
     }
-    return(init) # needs a FUNCTION, remember -- why, who knows.
+    return(init)
 }
 oval.init <- find.init(two.ovals)()
-plot.positions(oval.init$z, oval.init$b, oval.init$alpha)
-# so -- optim returns 100 (the upper bound) but they all look real good at 1. WHY.
-# One more reason to just say fuck alpha, no?
+plot.positions(oval.init$z, oval.init$b, oval.init$alpha) # 
+# Looks like it's ALL fucked up. K -- Hm. Fuck. 
+
 
 # (Functions for ...)
 ################
@@ -368,6 +356,13 @@ model.accuracy(two.ovals, ovals.init$z, ovals.init$alpha)
 
 # Draw little gray dotted lines between versions of the same node
 plot.errors <- function(z, b){
+    if(length(dim(z))==2){
+        z <- array(z, dim=c(dim(z),1))
+        z <- aperm(z, c(1,3,2))    
+    }
+
+    N <- dim(z)[1]
+    K <- dim(z)[2]
     for(i in 1:N){
         for(k in 1:K){
             x <- c(z[i,k,1], b[i,1])
@@ -438,11 +433,21 @@ model.accuracy(two.ovals, two.ovals.model$theta$z, two.ovals.model$theta$alpha) 
 # SOME TESTS WITH -- REDUCING SIGMA. Issue, though, is -- how many iterations?
 ovals.init <- find.init(two.ovals) # done outside so you can plot them
 plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
-two.ovals.model <- one.shot(two.ovals, ovals.init, .1, 2e4, # 4e3 not enough ... 2e4?
+
+two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 2e4, # 4e3 not enough ... 2e4?
                             "hlsm.stan", "two_ovals")
+plot.model(two.ovals.model, alpha=.3)
+
+# AND NOW WITH THE TRUE PARAMETERS
+true.theta <- function()(list(a=c(1,1), b=b, z=two.ovals.positions))
+two.ovals.true.model <- one.shot(two.ovals, true.theta, .05, 2e4,
+                                 "hlsm.stan", "two_ovals_true")   
+
 traceplot(two.ovals.model$fit) # I've never seen the z/e plots -- 
 # Also, gotta do better than the ... 
-plot.model(two.ovals.model, which="max") # the best
+plot.model(two.ovals.true.model, alpha=.5, which="max")
+
+
 # WHY ARE THEY ALL ON THAT FUCKIN DIAGONAL? Am I even DOING this right?
 plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
@@ -460,6 +465,18 @@ my.transform <- function(){
     # Is this the same as procrustes? Should look it up --
     # ALSO -- coordinate descent/convexity for LSMs in general
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # uniroot! What a great name!
@@ -483,7 +500,7 @@ build.b.fxn <- function(y, a, b, e, i, axis){
                 
             }
         }
-        return(-total)
+        return(total)
     }
     return(f)
 }
@@ -496,9 +513,9 @@ build.e.fxn <- function(y, a, b, e, i, k, axis, l){
             eik[axis] <- x
             d <- b[i,] + eik - b[j,] - e[j,k,]
             r <- sigma(a - L22(d)) - y[i,j,k]
-            total <- total + r*sqrt(L22(d)) # + -l/l #? HOW DO I SOLVE THESE? manually? line search?
+            total <- total + r*sqrt(L22(d))
         }
-        return(-total)
+        return(total) # add the interval +/-lambda when trying to solve, outside
     }
     return(f)
 }
@@ -517,53 +534,94 @@ lkhd <- function(y, a, b, e, l){
         }
     }
     total <- total - l*sum(abs(e)) # right -- subtract, for max (REMEMBER IT'S MAX)
+    return(total)
 }
 
 coord.opt <- function(y, a, b, e, l, maxit=1){
 
+    b.mle <- array(dim=dim(b))
+    e.mle <- array(dim=dim(e))
+    mle <- -Inf
+    
     iter <- 1
     lkhd <- array(dim=maxit)
     while(iter < maxit){ # Also a convergence criterion -- what? 
         # For each layer, first update the layer, then the base
         for(k in 1:K){ 
-            # update the e_ik
+            # update the b_i
             for(i in 1:N){
                 for(axis in 1:2){
                     f.bi <- build.b.fxn(y, a[k], b, e, i, axis)
-                    #bi.star <- uniroot(f.bi, c(0,.), extendInt = "yes")$root
-                    bi.star <- optimize(f.bi, c(-20,20))$minimum
+                    
+                    
+                    # THIS SHOULD BE ROOT FINDING BUT ITS NOT WORKING
+                    
+                    # FIND INTERVAL? With a line search? (Just -- use the line search?)
+                    # ALSO, these will be a lot easier to search with scaled versions.
+                    # SO -- work on scaling. Fuck. 
+                    # 
+                    # tryCatch({
+                    #     obj.vals <- array(dim=1000)
+                    #     vals <- seq(-20,20,length=1000)
+                    #     for(v.i in 1:1000){
+                    #         obj.vals[v.i] <- f.bi(vals[v.i])
+                    #     }
+                    #     lower <- vals[which.min(obj.vals)]
+                    #     upper <- vals[which.max(obj.vals)]
+                    #     print(lower)
+                    #     print(upper)
+                    #     bi.star <- uniroot(f.bi, c(lower,upper), extendInt = "yes")$root#bi.star <- uniroot(f.bi, c(0,.), extendInt = "yes")$root#bi.star <- uniroot(f.bi, c(0,.), extendInt = "yes")$root
+                    # })
+                    
+                    # bi.star <- optimize(f.bi, c(-20,20))$minimum
+                    
                     b[i,axis] <- bi.star
                 }
             }
-            # update the b_i
+            # update the e_ik
             for(i in 1:N){
                 for(axis in 1:2){
                     f.eik <- build.e.fxn(y, a[k], b, e, i, k, l, axis)
                     # eik.star <- uniroot(f.eik, c(9,10), extendInt = "downX")$root
                     # eik.star <- optimize(f.eik, c(-20,20))$minimum
-                    
-                    obj.min <- Inf
-                    eik.star <- NULL
-                    for(v in seq(-20,20,length=1000)){
-                        obj.val <- f.eik(v)
-                        if(obj.val < obj.min){
-                            obj.min <- obj.val
+
+                    eik.star <- 0
+                    for(v in seq(-20,10,length=1000)){
+                        val <- f.eik(v)
+                        if((-lambda < val) & (val < lambda)){
                             eik.star <- v
-                        }
-                        if(obj.val > -l & obj.val < l){ # if v \in [-lambda, lambda]
-                            eik.star <- 0
                             break
                         }
                     }
+                    # obj.min <- Inf
+                    # eik.star <- NULL
+                    # for(v in seq(-20,20,length=1000)){
+                    #     obj.val <- f.eik(v)
+                    #     if(obj.val < obj.min){
+                    #         obj.min <- obj.val
+                    #         eik.star <- v
+                    #     }
+                    #     if(obj.val > -l & obj.val < l){ # if v \in [-lambda, lambda]
+                    #         eik.star <- 0
+                    #         break
+                    #     }
+                    # }
                     e[i,k,axis] <- eik.star
                     
                 }
             }
         }
+        
         lkhd[iter] <- lkhd(y, a, b, e, l)
+        if(lkhd[iter] > mle){
+            mle <- lkhd[iter]
+            b.mle <- b
+            e.mle <- e
+        }
+        
         iter <- iter + 1
     }
-    theta <- list(a=a, b=b, e=e, l=l, lkhd=lkhd)
+    theta <- list(a=a, b=b.mle, e=e.mle, l=l, lkhd=lkhd)
     return(theta)
 }
 
@@ -600,13 +658,15 @@ source("/path/to/file/my_fn_lib1.r")
 # of the individual optimizations ... BUT, it looks like it's RUNNING. At least.
 
 # with lambda=1, everything got zeroed out. Dropping to .1.
-out <- coord.opt(two.ovals, a, b., e, .1, maxit=20) # FUCK. What is it and why? 'a'.
+out <- coord.opt(two.ovals, a, b., e, 1, maxit=20) # FUCK. What is it and why? 'a'.
+# okay, it's -- ... all over the place but SOME are high, get the BEST. Right.,
+
 # mother fuck -- it appears to have ... is the penalty on backwards? Back up, asshole.
 
 
 # Okay well now, it's all OVER the fucking place. K -- fuck. Need to back up,
 # commit, and try again. Fuck.
-plot(out$lkhd) # IT IS INCREASING. LET'S SEE HOW LONG. (Does it plateau?)
+plot(out$lkhd) # IT IS INCREASING. LET'S SEE HOW LONG. (Does it plateau?) 
 
 # Hm -- peaked soon, then -- dropped precipitously. Hm. K. What was happening?
 # WHAT'S HAPPENING WITH ACCURACY?
@@ -615,20 +675,12 @@ z.out  <- array(dim=c(N,K,2))
 for(k in 1:K){
     z.out[,k,] <- out$b + out$e[,k,]
 }
-plot.positions(z.out, out$b, .4) # why is alpha still a fucking problem?
+plot.positions(z.out, out$b, .4) # COMPLETELY fucked
 plot.errors(z.out, out$b) 
 
 
 
 
-
-
-
-
-
-
-# Okay so that doesn't work -- since it's 1d, do some plots of the f.bi, f.eik etc.,
-# see if they HAVE roots (among other things)
 
 
 
