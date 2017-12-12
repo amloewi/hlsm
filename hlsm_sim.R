@@ -402,7 +402,7 @@ plot.errors(two.ovals.positions, b) # Good!
 
 # SOME TESTS WITH -- REDUCING SIGMA. Issue, though, is -- how many iterations?
 ovals.init <- find.init(two.ovals)() # done outside so you can plot them
-plot.positions(ovals.init$z, ovals.init$b, ovals.init$alpha)
+plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
 
 
 
