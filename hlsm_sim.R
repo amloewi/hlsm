@@ -243,7 +243,7 @@ unpack.hlsm.fit <- function(fit, N, K, which="max"){
                 b=params[2:(N+1),],
                 # => z[N,K,2], i.e. nodes, layers, x/y coords.
                 z=aperm(array(params[(N+2):(1+N+N*2),], # This is UGLY, but works
-                              dim=c(K,N,2)),
+                              dim=c(K,N,2)),            # ... MAYBE NOT, ASSHOLE
                         c(2,1,3)))) 
 }
 
@@ -284,8 +284,8 @@ plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL){
     
     plot.lsm(alpha[1], b, add=F, col=1, xlim=xlim, ylim=ylim)
     for(i in 1:dim(z)[3]){
-        #plot.lsm(alpha[i+1], z[,i,], add=T, col=i+1)
-        plot.lsm(alpha[i+1], z[ , ,i], add=T, col=i+1)
+        plot.lsm(alpha[i+1], z[,i,], add=T, col=i+1)
+        #plot.lsm(alpha[i+1], z[ , ,i], add=T, col=i+1)
     }
 }
 
@@ -296,8 +296,9 @@ plot.model <- function(m, alpha=NULL, which="max", xlim=NULL, ylim=NULL){
     N <- dim(x)[1]
     K <- dim(x)[2]
     theta <- unpack.hlsm.fit(m$fit, N, K, which=which)
-    
-    z <- theta$z
+
+    # apparently, this is fucked, so --     
+    z <- aperm(theta$z, c(1,3,2)) # will THIS fix it? STILL looks fucked
     b <- theta$b
     init <- m$init$b
     
@@ -342,7 +343,7 @@ plot.errors <- function(z, b){
         z <- array(z, dim=c(dim(z),1))
         z <- aperm(z, c(1,3,2))    
     }
-
+    z <- aperm(z, c(1, 3, 2))
     N <- dim(z)[1]
     K <- dim(z)[2]
     for(i in 1:N){
@@ -366,9 +367,9 @@ L22 <- function(x) sum(x^2)
 
 ##### SETTING PARAMETERS CREATING DATA AND RUNNING MODELS #####
 
-#library(rstan)
-#rstan_options(auto_write = TRUE)
-#options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
+library(rstan)
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
 
 
 
@@ -383,7 +384,7 @@ sigma <- 10
 
 library(abind)
 library(igraph)
-source('../anticrustes.r') # necessary for find.init
+source('anticrustes.r') # necessary for find.init
 
 # plot.lsm(1, b)
 # plot.lsm(1, stretch(b, 2, dim="x"), add=T, col=2)
@@ -402,19 +403,19 @@ plot.errors(two.ovals.positions, b) # Good!
 #plot(graph_from_adjacency_matrix(two.ovals[,,2])) 
 
 # SOME TESTS WITH -- REDUCING SIGMA. Issue, though, is -- how many iterations?
-ovals.init <- find.init(two.ovals)() # done outside so you can plot them
-plot.positions(ovals.init$z, ovals.init$b, ovals.init$alpha)
+ovals.init <- find.init(two.ovals) # done outside so you can plot them
+plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
 
 
 
 ##### FITTING #####
-# two.ovals.model <- one.shot(two.ovals, ovals.init, .025, 4e4,
-#                             "hlsm.stan", "two_ovals")
-# plot.model(two.ovals.model)
-# plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
+two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 4e3,
+                                    "hlsm.stan", "two_ovals")
+plot.model(two.ovals.model)
+plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 
-
+# AND ALSO REVISIT UNPACK WHICH MIGHT BE ALL WRONG
 
 
 # AND NOW WITH THE TRUE PARAMETERS
