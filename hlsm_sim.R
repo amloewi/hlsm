@@ -258,7 +258,7 @@ plot.lsm <- function(alpha, z, add=F, col="black", xlim=c(-2,2), ylim=c(-2,2)){
     if(add){
         points(z, col=col)
     } else {
-        plot(z, col=col, xlim=xlim, ylim=ylim)
+        plot(z, col=col, xlim=xlim, ylim=ylim, xaxt='n', yaxt='n')
     }
     N <- nrow(z)
     for(i in 1:N){
