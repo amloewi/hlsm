@@ -223,9 +223,10 @@ correlations is challenging.
 
     \textbf{Goal:} Collapse similar networks\\
     We include a LASSO penalty on the log-likelihood:
-    \[\sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk}
-        + (1-y_{ijk})\ln (1-\sigma_{ijk})} +
-    \lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1\]
+    \begin{align*}
+    & \sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk} + (1-y_{ijk})\ln (1-\sigma_{ijk})} \\
+    & +\lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1
+    \end{align*}
   where $z_{ik} = b_i + \epsilon_{ik}$ for initialization points, $b_i$
 % To fit these models, three methods were tested on the following likelihood:
 
@@ -258,12 +259,25 @@ correlations is challenging.
 %Convex methods have valuable contributions for fitting complex Latent Space Models, and their extensions
 %\end{alertblock}
 
+%----------------------------------------------------------------------------------------
+%	RESULTS
+%----------------------------------------------------------------------------------------
+
+\begin{block}{Results}
+
 \begin{figure}[h!]
    \centering
    \includegraphics[width=20in]{../R/plot_objective.png} % requires the graphicx package
    \caption{Objective function for different values of $\lambda$}
    \label{fig:example}
 \end{figure}
+
+%\begin{figure}
+%\includegraphics[width=0.8\linewidth]{error_daisy}
+%\caption{Figure caption}
+%\end{figure}
+
+\end{block}
 
 %----------------------------------------------------------------------------------------
 
@@ -275,63 +289,32 @@ correlations is challenging.
 %	MATHEMATICAL SECTION
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Model's Advantages}
+%\begin{block}{Model's Advantages}
 
-Our model has the additional inclusion of a hierarchy on the latent variables:
-
-\[
-z_{ik} = b_i + \epsilon_{ik}
-\]
-
-each node has a separate latent position to explain its ties within a
-single layer of the multigraph, but these multiple positions are all
-tied together by a single ``base'' position for that node $b_i$, and a
-layer-specific perturbation, $\epsilon_{ik}$.
-
-This allows two major advantages. One is graph-wise regularization
-with a group lasso penalty, allowing entire redundant layers to be
-removed for meaningful dimensionality reduction. Second,
-regularization allows a manual tuning between layouts that are
-expressive, and those that are comparable, solving the difficult
-problem of visual comparability.
-
-\end{block}
+%Our model has the additional inclusion of a hierarchy on the latent variables:
+%\[
+%z_{ik} = b_i + \epsilon_{ik}
+%\]
+%
+%each node has a separate latent position to explain its ties within a
+%single layer of the multigraph, but these multiple positions are all
+%tied together by a single ``base'' position for that node $b_i$, and a
+%layer-specific perturbation, $\epsilon_{ik}$.
+%
+%This allows two major advantages. One is graph-wise regularization
+%with a group lasso penalty, allowing entire redundant layers to be
+%removed for meaningful dimensionality reduction. Second,
+%regularization allows a manual tuning between layouts that are
+%expressive, and those that are comparable, solving the difficult
+%problem of visual comparability.
+%
+%\end{block}
 
 %----------------------------------------------------------------------------------------
 
 \end{column} % End of column 2.1
 
 \begin{column}{\onecolwid} % The second column within column 2 (column 2.2)
-
-%----------------------------------------------------------------------------------------
-%	RESULTS
-%----------------------------------------------------------------------------------------
-
-\begin{block}{Results}
-
-\begin{figure}
-\includegraphics[width=0.8\linewidth]{error_daisy}
-\caption{Figure caption}
-\end{figure}
-
-% Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non
-% porttitor. Sed a massa dolor, id ornare enim:
-
-% \begin{table}
-% \vspace{2ex}
-% \begin{tabular}{l l l}
-% \toprule
-% \textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
-% \midrule
-% Treatment 1 & 0.0003262 & 0.562 \\
-% Treatment 2 & 0.0015681 & 0.910 \\
-% Treatment 3 & 0.0009271 & 0.296 \\
-% \bottomrule
-% \end{tabular}
-% \caption{Table caption}
-% \end{table}
-
-\end{block}
 
 %----------------------------------------------------------------------------------------
 
