@@ -136,20 +136,20 @@
   as friendship, professional colleague, or facebook connected, for
   example.\\
   \textbf{Problem:} Social science and network analysis rely
-  on intuitive and interpretable models.  Interpreting a graph with
-  many nodes and differing, but related edges, is challenging.
+  on intuitive and interpretable models. Visualizing the similarities
+  between multiple related graphs is challenging.
   \begin{figure}
     \centering
     \includegraphics{complexMultigraph.png}
     \caption{(Source: Salter-Townshend, Michael, and Tyler H. McCormick)}
   \end{figure}
-  \textbf{Solution:} Using a LASSO penalty, we aim to collapse
-  sufficiently similar graphs subject to a tuning parameter.
+  \textbf{Solution:} Using a LASSO penalty, we aim to force similar graphs
+  to be displayed in comparable, visualizable, ways
 \end{block}
 
 \begin{block}{Employee Relationships Data}
-  Recently conducted study at a charter school in West Baltimore\\
-  Collecteda five-layer valued network between the
+  A recently conducted study at a charter school in West Baltimore\\
+  collected a five-layer valued network between the
   approximately eighty employees of the school:
   \begin{itemize}
   \item Frequency of interaction
@@ -187,10 +187,10 @@ correlations is challenging.
     \item Map nodes, $i\mapsto z_i\in\R^n$ where proximity,
     $\norm{z_i-z_j}_2=d_{ij}<1$, indicates nodes are connected (and not
     connected otherwise)
-    \item Makes reciprocity ($j\rightarrow i\Rightarrow i\rightarrow j$) and
+    \item Intuitively captures reciprocity ($j\rightarrow i\Rightarrow i\rightarrow j$) and
     transitivity ($i\rightarrow j, j\rightarrow k\Rightarrow
-    i\rightarrow k$) probable
-  \item Given $\sigma_{ij} = \P(Y_{ij}=1|z_i,z_j) = \logitinv\paren{\alpha + \norm{z_i-z_j}_2^2}$
+    i\rightarrow k$)
+  \item Edge probability: $\sigma_{ij} = \P(Y_{ij}=1|z_i,z_j) = \logitinv\paren{\alpha + \norm{z_i-z_j}_2^2}$
     where $Y_{ij}=1$ indicates $i,j$ are connected in the data, find $z$
   \item Likelihood: $\prod_{i<j} \sigma_{ij}^{y_{ij}}(1- \sigma_{ij})^{1-y_{ij}}$
   \end{itemize}
@@ -222,7 +222,7 @@ correlations is challenging.
   \begin{block}{Hierarchical Models}
 
     \textbf{Goal:} Collapse similar networks\\
-    We include a group-wise LASSO penalty on the log-likelihood:
+    We include a LASSO penalty on the log-likelihood:
     \[\sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk}
         + (1-y_{ijk})\ln (1-\sigma_{ijk})} +
     \lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1\]
@@ -236,7 +236,7 @@ correlations is challenging.
 \textbf{Optimization Approaches:}
 \begin{enumerate}
 \item Proximal Gradient Descent
-\item Coordinate-Wise Optimization (pending)
+\item Coordinate-Wise Optimization
 \item Hamiltonian Monte Carlo methods
 \end{enumerate}
 
@@ -349,11 +349,11 @@ problem of visual comparability.
 
     \begin{itemize}
     \item Negative log-likelihood is not convex in the positions\\
-      \textbf{Fix:} We started from various random initializations
+      \textbf{Fix:} We started from carefully chosen initializations
     \item Distances between positions will yield same likelihood under
       translations and rotation\\
-      \textbf{Fix:} Fit each layer of the hierarchy separately then
-      use linear transformations to align each to initialize the model
+      \textbf{Fix:} Fit coordinate-wise, not allowing for spin, unlike the
+      standard sampling approaches
     \end{itemize}
 % \begin{figure}
 % \centering

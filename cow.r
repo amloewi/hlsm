@@ -67,7 +67,7 @@ coord.opt <- function(y, a, b, e, l, maxit=1, trace=F){
     
     if(trace){
         pdf("coord_opt_trace.pdf")
-        par(mfrow=c(4,2))
+        par(mfrow=c(3,2))
     }
     
     iter <- 1
@@ -82,11 +82,14 @@ coord.opt <- function(y, a, b, e, l, maxit=1, trace=F){
                     f.bi <- build.b.fxn(y, a[k], b, e, i, axis)
                     
                     bi.star <- broot.finding(f.bi, -10, 10)
+                    # Make a heat-map overlay, of the values?
                     #print(paste("bi.star: ", bi.star))
+
+                    if(is.null(bi.star)) bi.star <- b[i,axis] # don't change it? else?
+                    
                     if(trace)
                         snapshot(e, b, a, i, axis, bi.star)
                     
-                    if(is.null(bi.star)) bi.star <- b[i,axis] # don't change it?
                     b[i,axis] <- bi.star
                 }
             }
@@ -99,16 +102,19 @@ coord.opt <- function(y, a, b, e, l, maxit=1, trace=F){
                     
                     eik.star <- broot.finding(f.eik, -10, 10, l)
                     # print(paste("eik.star: ", eik.star))
+
+                    if(is.null(eik.star)) eik.star <- e[i,k,axis] # don't change it?
+                    
                     if(trace)
                         snapshot(e, b, a, i, axis, eik.star, k)
                     
-                    
-                    if(is.null(eik.star)) eik.star <- e[i,k,axis] # don't change it?
                     e[i,k,axis] <- eik.star
                     
                 }
             }
         }
+        
+        # DO A MORE FINE-GRAINED LKHD GRAPH -- step by step, not just iteration. Right.
         
         lkhd[iter] <- lkhd(y, a, b, e, l)
         if(lkhd[iter] > mle){
@@ -141,8 +147,8 @@ broot.finding <- function(f, lower, upper, tol=.15, length=1000){
 
 e.to.z <- function(e, b){
     
-    N <- dim(e)(1)
-    K <- dim(e)(2)
+    N <- dim(e)[1]
+    K <- dim(e)[2]
     
     z.out  <- array(dim=c(N,K,2))
     for(k in 1:K){
