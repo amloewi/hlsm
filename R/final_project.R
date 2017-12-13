@@ -374,11 +374,13 @@ run.opt.wrapper <- function(){
   png('plot_positions.png', res=300, width=9, height=4.5, unit="in")
   par(mfrow=c(2, 2), mar=c(0, 0, 1, 0)+0.1)
   plot.positions(z, b, alpha=1)
+  title(main='Initial Positions')
   for (i in 1:(length(lambda.values)-1)) {
     b.new <- list.results[[i]]$b
     z.new <- array(list.results[[i]]$b, dim=c(dim(list.results[[i]]$b), K)) + 
       list.results[[i]]$epsilon
     plot.positions(z.new, b.new, alpha=1.5)
+    title(main=bquote(lambda == .(lambda.values[i])))
   }
   dev.off()
 }
