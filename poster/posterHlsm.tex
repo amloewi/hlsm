@@ -226,8 +226,7 @@ correlations is challenging.
     \[\sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk}
         + (1-y_{ijk})\ln (1-\sigma_{ijk})} +
     \lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1\]
-  where $z_{ik} = b_i + \epsilon_{ik}$ for initialization points
-  randomized but near the origin
+  where $z_{ik} = b_i + \epsilon_{ik}$ for initialization points, $b_i$
 % To fit these models, three methods were tested on the following likelihood:
 
 % \[
@@ -237,8 +236,8 @@ correlations is challenging.
 \textbf{Optimization Approaches:}
 \begin{enumerate}
 \item Proximal Gradient Descent
-\item Coordinate-Wise Optimization
-\item Hamiltonian Monte Carlo methods (for comparison)
+\item Coordinate-Wise Optimization (pending)
+\item Hamiltonian Monte Carlo methods
 \end{enumerate}
 
 %The first was used as a natural approach to the lasso penalized problem, the second was used to prevent the model from ``spinning'' during inference, and the third is the typical way in which these models were fit, used for combarability.
@@ -306,26 +305,26 @@ problem of visual comparability.
 \begin{block}{Results}
 
 \begin{figure}
-%\includegraphics[width=0.8\linewidth]{placeholder.jpg}
+\includegraphics[width=0.8\linewidth]{error_daisy}
 \caption{Figure caption}
 \end{figure}
 
-Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non
-porttitor. Sed a massa dolor, id ornare enim:
+% Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non
+% porttitor. Sed a massa dolor, id ornare enim:
 
-\begin{table}
-\vspace{2ex}
-\begin{tabular}{l l l}
-\toprule
-\textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
-\midrule
-Treatment 1 & 0.0003262 & 0.562 \\
-Treatment 2 & 0.0015681 & 0.910 \\
-Treatment 3 & 0.0009271 & 0.296 \\
-\bottomrule
-\end{tabular}
-\caption{Table caption}
-\end{table}
+% \begin{table}
+% \vspace{2ex}
+% \begin{tabular}{l l l}
+% \toprule
+% \textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
+% \midrule
+% Treatment 1 & 0.0003262 & 0.562 \\
+% Treatment 2 & 0.0015681 & 0.910 \\
+% Treatment 3 & 0.0009271 & 0.296 \\
+% \bottomrule
+% \end{tabular}
+% \caption{Table caption}
+% \end{table}
 
 \end{block}
 
@@ -348,8 +347,8 @@ Treatment 3 & 0.0009271 & 0.296 \\
       \textbf{Fix:} We started from various random initializations
     \item Distances between positions will yield same likelihood under
       translations and rotation\\
-      \textbf{Fix:} All initializations started near zero so that they
-      only became as complex as necessary
+      \textbf{Fix:} Fit each layer of the hierarchy separately then
+      use linear transformations to align each to initialize the model
     \end{itemize}
 % \begin{figure}
 % \centering
