@@ -225,7 +225,7 @@ correlations is challenging.
     We include a LASSO penalty on the log-likelihood:
     \begin{align*}
     & \sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk} + (1-y_{ijk})\ln (1-\sigma_{ijk})} \\
-    & +\lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1
+    & +\lambda\sum_i \sum_k \norm{\epsilon_{ik}}_2
     \end{align*}
   where $z_{ik} = b_i + \epsilon_{ik}$ for initialization points, $b_i$
 % To fit these models, three methods were tested on the following likelihood:
@@ -289,7 +289,7 @@ problem of visual comparability.
 \begin{figure}[h!]
    \centering
    \includegraphics[width=19in]{../R/plot_positions.png} % requires the graphicx package
-   \caption{Initial and final positions using $\lambda=1$}
+   \caption{Initial and final positions using different values for $\lambda$}
    \label{fig:positions}
 \end{figure}
 
