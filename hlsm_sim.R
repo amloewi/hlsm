@@ -1,5 +1,5 @@
 # This is where hlsm.stan is
-setwd("~/Documents/Research/hlsm")
+# setwd("~/Documents/Research/hlsm")
 
 
             ##### FUNCTIONS FOR GENERATING HLSM DATA #####
@@ -365,9 +365,9 @@ L22 <- function(x) sum(x^2)
 
 ##### SETTING PARAMETERS CREATING DATA AND RUNNING MODELS #####
 
-library(rstan)
-rstan_options(auto_write = TRUE)
-options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
+#library(rstan)
+#rstan_options(auto_write = TRUE)
+#options(mc.cores = parallel::detectCores()) # => 4 chains at once. Issues?
 
 
 
@@ -382,7 +382,7 @@ sigma <- 10
 
 library(abind)
 library(igraph)
-source('anticrustes.r') # necessary for find.init
+source('../anticrustes.r') # necessary for find.init
 
 # plot.lsm(1, b)
 # plot.lsm(1, stretch(b, 2, dim="x"), add=T, col=2)
