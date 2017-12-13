@@ -264,7 +264,7 @@ plot.lsm <- function(alpha, z, add=F, col="black", xlim=c(-2,2), ylim=c(-2,2)){
     for(i in 1:N){
         for(j in 1:N){
             if(edges[i,j]){
-                lines(z[c(i,j),1], z[c(i,j),2], col=col)
+                lines(z[c(i,j),1], z[c(i,j),2], col=col, xlab='', ylab='')
             }
         }
     }
@@ -283,8 +283,9 @@ plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL){
         alpha <- rep(alpha, dim(z)[2]+1)
     
     plot.lsm(alpha[1], b, add=F, col=1, xlim=xlim, ylim=ylim)
-    for(i in 1:dim(z)[2]){
-        plot.lsm(alpha[i+1], z[,i,], add=T, col=i+1)
+    for(i in 1:dim(z)[3]){
+        #plot.lsm(alpha[i+1], z[,i,], add=T, col=i+1)
+        plot.lsm(alpha[i+1], z[ , ,i], add=T, col=i+1)
     }
 }
 
@@ -402,7 +403,7 @@ plot.errors(two.ovals.positions, b) # Good!
 
 # SOME TESTS WITH -- REDUCING SIGMA. Issue, though, is -- how many iterations?
 ovals.init <- find.init(two.ovals)() # done outside so you can plot them
-plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
+plot.positions(ovals.init$z, ovals.init$b, ovals.init$alpha)
 
 
 

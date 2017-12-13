@@ -313,6 +313,12 @@ run.optimization <- function(b, epsilon, y, lambda=1, t=1e-3) {
   return(list(b=b, epsilon=epsilon, obj.value=obj.value))
 }
 
+compute.z <- function(b, epsilon) {
+  K <- dim(epsilon)[3]
+  z <- array(b, dim=c(dim(b), K)) + epsilon
+  return(z)
+}
+
 run.opt.wrapper <- function(){
   # uses alex initial values to call optimization
   
@@ -361,11 +367,16 @@ run.opt.wrapper <- function(){
   print(g1)
   dev.off()
   
-  
-  
-  
-  
-  
+  png('plot_positions.png', res=300, width=9, height=4.5, unit="in")
+  par(mfrow=c(1, 2), mar=c(2, 2, 2, 1)+0.1)
+  z <- ovals.init$z
+  plot.positions(z, b, alpha=1)
+  b.new <- list.results[[1]]$b
+  z.new <- array(list.results[[1]]$b, dim=c(dim(list.results[[1]]$b), K)) + 
+    list.results[[1]]$epsilon
+  plot.positions(z.new, b.new, alpha=1)
+  dev.off()
+
   
 }
 
