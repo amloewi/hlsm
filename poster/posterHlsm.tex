@@ -221,7 +221,7 @@ correlations is challenging.
 
   \begin{block}{Hierarchical Models}
 
-    \textbf{Goal:} Collapse similar networks\\
+    \textbf{Goal:} Collapse similar networks indicated by $k$\\
     We include a LASSO penalty on the log-likelihood:
     \begin{align*}
     & \sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk} + (1-y_{ijk})\ln (1-\sigma_{ijk})} \\
@@ -336,6 +336,16 @@ correlations is challenging.
 
 \begin{column}{\onecolwid} % The third column
 
+  \begin{block}{Objective Functions}
+    \begin{figure}[h!]
+   \centering
+   \includegraphics[width=\textwidth]{../R/plot_objective.png} % requires the graphicx package
+   \caption{Objective function for different values of $\lambda$}
+   \label{fig:obj_fun}
+\end{figure}
+
+  \end{block}
+
   \begin{block}{Challenges}
 
     \begin{itemize}
@@ -384,7 +394,7 @@ refining an HLSM fit, given a good starting point.
 
  \begin{block}{References}
 
- %\nocite{*} % Insert publications even if they are not cited in the poster
+ \nocite{*} % Insert publications even if they are not cited in the poster
  \small{\bibliographystyle{unsrt}
  \bibliography{sample}\vspace{0.75in}}
 
