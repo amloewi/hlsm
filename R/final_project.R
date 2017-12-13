@@ -6,6 +6,7 @@
 # ****************************************
 #
 #
+
 dummy.y <- function(){
   y <- array(0, dim=c(10, 10, 3)) 
   yy <- matrix(0, nrow=10, ncol=10)
@@ -78,7 +79,7 @@ sigmoid <- function(x) {
   return(1 / (1 + np.exp(x)))
 }
 
-compute.eta <- function(b, epsilon, alpha.value=1) {
+compute.eta <- function(b, epsilon, alpha.value=0.3) {
   # computes the eta function (argument of the sigmoid)
   #
   # Args:
@@ -109,6 +110,19 @@ compute.eta <- function(b, epsilon, alpha.value=1) {
   return(alpha.value - d)
 }
 
+log.lik <- function(b, epsilon, y) {
+  # because y[, , k] is a symmetric matrix and only need the lower half
+  # we create a new matrix y.2 with size (n/2*(n-1) vs K)
+  # where each column k is a vector with the elements of the lower half
+  # of the matrix y[, , k]
+  y.2 <- apply(y, 3, FUN={function(x){as.vector(x[lower.tri(x)])}}) 
+  
+  out <- (1-y.2) * compute.eta(b, epsilon) + log(1 + exp(-compute.eta(b, epsilon)))
+  out <- sum(out)
+  
+  return(out)
+}
+
 objective.function <- function(b, epsilon, y, lambda) {
   # Computes objective function (Binomial log MLE with lasso penalty)
   #
@@ -125,7 +139,7 @@ objective.function <- function(b, epsilon, y, lambda) {
   # of the matrix y[, , k]
   y.2 <- apply(y, 3, FUN={function(x){as.vector(x[lower.tri(x)])}}) 
   
-  out <- (1-y.2) * compute.eta(b, epsilon) - log(1 + exp(compute.eta(b, epsilon)))
+  out <- (1-y.2) * compute.eta(b, epsilon) + log(1 + exp(-compute.eta(b, epsilon)))
   out <- sum(out) + lambda * sum(sqrt(epsilon^2))
   
   return(out)
@@ -149,15 +163,17 @@ proximal_op <- function(b, epsilon, t, lambda){
   out <- array(0, dim=c(dim(epsilon)[1], dim(epsilon)[2], dim(epsilon)[3]+1))
   out[ , , 1] <- b
   
-  for (k in dim.epsilon[3]){
-    norm_value <- sqrt(sum(epsilon[ , , k]^2))
-    
-    alpha <- 0
-    if(norm_value >= t*lambda){
-      alpha <- ((norm_value - t*lambda)/norm_value)*epsilon[ , , k]
+  for (k in 1:dim.epsilon[3]){
+    for (i in 1:dim.epsilon[1]) {
+      norm_value <- sqrt(sum(epsilon[i, , k]^2))
+      
+      alpha <- 0
+      if(norm_value >= t*lambda){
+        alpha <- ((norm_value - t*lambda)/norm_value)*epsilon[i, , k]
+      }
+      
+      out[i, , k+1] <- alpha
     }
-    
-    out[ , , k] <- alpha
   }
   
   return(out)
@@ -180,7 +196,7 @@ gradient_g <- function(b, epsilon, y){
   
   # computes exp(eta)/(1+exp(eta)) and allocates it to a 
   # n vs n vs K array (needed to be coherent with y)
-  exp.eta.aux <- exp(compute.eta(b, epsilon))/(1+compute.eta(b, epsilon))
+  exp.eta.aux <- exp(-compute.eta(b, epsilon))/(1+exp(-compute.eta(b, epsilon)))
   exp.eta <- array(0, dim=c(n, n, K))
   for(k in 1:K) {
     m <- matrix(0,n,n)
@@ -207,7 +223,9 @@ gradient_g <- function(b, epsilon, y){
         }
       }
     }
-    grad[m, , 1] <- 2*aux
+    # the negative sign here comes from the fact that it is the
+    # negative log likelihood
+    grad[m, , 1] <- -2*aux
   }
   
   # gradient for epsilon_k
@@ -225,7 +243,9 @@ gradient_g <- function(b, epsilon, y){
           aux <- aux + (y[i, m, k] - 1 + exp.eta[i, m, k])*(z[i, ,k] - z[m, , k])
         }
       }
-      grad[m, , (k+1)] <- 2*aux
+      # the negative sign here comes from the fact that it is the
+      # negative log likelihood
+      grad[m, , (k+1)] <- -2*aux
     }
   }
   
@@ -233,36 +253,6 @@ gradient_g <- function(b, epsilon, y){
   return(grad)
 }
 
-generalized_grad <- function(b, epsilon, y, t, lambda){
-  # Computes the generalized gradient for the proximal gradient method
-  #
-  # Args:
-  #     b:  numeric vector of dimension (n vs 2) with positions in 2-d of 
-  #         each node
-  #     epsilon:  numeric array of dimension (n vs 2 vs k) with deviations in 
-  #               2-d of from b for each node in each level
-  #     y: numeric array of dimension (n vs n vs k)
-  #     t: scalar
-
-  n <- dim(epsilon)[1]
-  K <- dim(epsilon)[3]
-  
-  beta <- array(0, dim=c(n, dim(epsilon)[2], K+1))
-  beta[ , , 1] <- b
-  beta[ , , 2:(K+1)] <- epsilon
-  
-  grad_g <- gradient_g(b, epsilon, y)
-  
-  beta1 <- beta - t*grad_g
-  
-  b1 <- beta1[ , , 1]
-  epsilon1 <- beta1[ , , 2:(K+1)]
-  
-  gen_grad = (1/t) * (beta - proximal_op(b1, epsilon1, t, lambda))
-  
-  return(gen_grad)
-}
-  
 update_beta <- function(b, epsilon, y, t, lambda){
   # Updates the value of the parameter array
   #
@@ -282,29 +272,30 @@ update_beta <- function(b, epsilon, y, t, lambda){
   beta[ , , 1] <- b
   beta[ , , 2:(K+1)] <- epsilon
   
-  beta_new = beta - t * generalized_grad(b, epsilon, y, t, lambda)
+  grad_g <- gradient_g(b, epsilon, y)
   
-  return(beta_new)
+  beta.aux <- beta - t * grad_g
+  b.aux <- beta.aux[ , , 1]
+  epsilon.aux <- beta.aux[ , , 2:(K+1)]
+  
+  beta.new <- proximal_op(b.aux, epsilon.aux, t, lambda)
+  
+  return(beta.new)
 }
 
-
-run.optimization <- function() {
+run.optimization <- function(b, epsilon, y, lambda=1, t=1e-3) {
   
-  n.steps <- 100
+  n.steps <- 2000
   
-  # read y
-  y <- dummy.y()
+  #y <- dummy.y()
   
   n <- dim(y)[1]
   K <- dim(y)[3]
   
-  b <- array(runif(2*n), dim=c(n, 2))
-  epsilon <- array(runif(2*n, -0.5, 0.5), dim=c(n, 2, K))
+  #b <- array(runif(2*n), dim=c(n, 2))
+  #epsilon <- array(runif(3*(2*n), -0.5, 0.5), dim=c(n, 2, K))
   
   obj.value <- rep(0, n.steps)
-  
-  lambda <- 0.1
-  t <- 1
   
   for (s in 1:n.steps) {
     # evaluate objective function
@@ -318,11 +309,115 @@ run.optimization <- function() {
   
   plot(1:n.steps, obj.value, type='l', xlab='step', 
        ylab='Objective Function')
-  z <- array(b, dim=c(dim(b), K)) + epsilon
-  par(mfrow=c(2,2))
-  plot(z[,1,1],z[,2,1], main="K=1")
-  plot(z[,1,1],z[,2,2], main="K=1")
-  plot(z[,1,3],z[,2,3], main="K=1")
-  dev.off()
-
+  
+  return(list(b=b, epsilon=epsilon, obj.value=obj.value))
 }
+
+run.opt.wrapper <- function(){
+  # uses alex initial values to call optimization
+  
+  source('../hlsm_sim.R')
+  
+  b <- ovals.init$b
+  n <- dim(b)[1]
+  K <- dim(ovals.init$z)[3]
+  
+  epsilon <- ovals.init$z - array(b, dim=c(dim(b), K))
+  y <- two.ovals
+  
+  list.results <- list()
+  lambda.values <- c(0.1, 1, 10, 100)
+  for (i in 1:length(lambda.values)){
+    result.opt <- run.optimization(b, epsilon, y, lambda = lambda.values[i])
+    list.results[[i]] <- result.opt
+  }
+  
+  library(ggplot2)
+  library(plyr)
+  library(dplyr)
+  library(tidyr)
+  
+  n.steps <- length(list.results[[1]]$obj.value)
+  
+  df.obj.values <- data.frame(matrix(NA,nrow=n.steps, 
+                                     ncol=length(lambda.values)))
+  names(df.obj.values) <- lambda.values
+  for (i in 1:length(lambda.values)) {
+    df.obj.values[,i] <- list.results[[i]]$obj.value
+  }
+  df.obj.values$step <- 1:nrow(df.obj.values)
+  
+  df.obj.values <- gather(df.obj.values, lambda, value, `0.1`:`100`, factor_key=TRUE)
+  
+  g1 <- ggplot() + geom_line(data=df.obj.values, 
+                             aes(x=step, y=value, linetype=lambda))
+  
+  g1 <- g1 + theme_bw() + scale_y_continuous(trans='log') + 
+    theme(axis.text.y = element_blank(), legend.position=c(0.95,0.95), 
+          legend.justification=c(1,1)) + ylab('Log Obj Function') + 
+    xlab('iteration')
+  
+  png('plot_objective.png', res=300, width=9, height=3, unit="in")
+  print(g1)
+  dev.off()
+  
+  
+  
+  
+  
+  
+  
+}
+
+
+# while (TRUE) {
+#   gen_grad <- generalized_grad(b, epsilon, y, t.step, lambda)
+#   beta.new <- beta - t.step * gen_grad
+#   b.new <- beta.new[ , , 1]
+#   epsilon.new <- beta.new[ , , 2:(K+1)]
+#   
+#   if(log.lik(b.new, epsilon.new, y) > log.lik(b, epsilon, y)
+#      - t.step * sum(grad_g * gen_grad) + t.step/2 * sum(gen_grad^2)){
+#     t.step <- t.step * beta.step
+#   } else {
+#     break
+#   }
+#   
+#   if(ii > 100) {
+#     cat('back tracking line search ended without gowing down...\n')
+#     break
+#   }
+#   ii <- ii+1
+# }
+
+generalized_grad <- function(b, epsilon, y, t, lambda){
+  # Computes the generalized gradient for the proximal gradient method
+  #
+  # Args:
+  #     b:  numeric vector of dimension (n vs 2) with positions in 2-d of 
+  #         each node
+  #     epsilon:  numeric array of dimension (n vs 2 vs k) with deviations in 
+  #               2-d of from b for each node in each level
+  #     y: numeric array of dimension (n vs n vs k)
+  #     t: scalar
+  
+  n <- dim(epsilon)[1]
+  K <- dim(epsilon)[3]
+  
+  beta <- array(0, dim=c(n, dim(epsilon)[2], K+1))
+  beta[ , , 1] <- b
+  beta[ , , 2:(K+1)] <- epsilon
+  
+  grad_g <- gradient_g(b, epsilon, y)
+  
+  beta1 <- beta - t*grad_g
+  
+  b1 <- beta1[ , , 1]
+  epsilon1 <- beta1[ , , 2:(K+1)]
+  
+  gen_grad = (1/t) * (beta - proximal_op(b1, epsilon1, t, lambda))
+  
+  return(gen_grad)
+}
+
+
