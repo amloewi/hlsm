@@ -326,9 +326,13 @@ run.opt.wrapper <- function(){
   
   b <- ovals.init$b
   n <- dim(b)[1]
+  
+  # ovals.init$z is (n,K,2)
+  z <- ovals.init$z
+  z <- aperm(z, c(1, 3, 2)) # permute to (n, 2, K)
   K <- dim(ovals.init$z)[3]
   
-  epsilon <- ovals.init$z - array(b, dim=c(dim(b), K))
+  epsilon <-  z - array(b, dim=c(dim(b), K))
   y <- two.ovals
   
   list.results <- list()
@@ -368,16 +372,15 @@ run.opt.wrapper <- function(){
   dev.off()
   
   png('plot_positions.png', res=300, width=9, height=4.5, unit="in")
-  par(mfrow=c(1, 2), mar=c(2, 2, 2, 1)+0.1)
-  z <- ovals.init$z
+  par(mfrow=c(2, 2), mar=c(0, 0, 1, 0)+0.1)
   plot.positions(z, b, alpha=1)
-  b.new <- list.results[[1]]$b
-  z.new <- array(list.results[[1]]$b, dim=c(dim(list.results[[1]]$b), K)) + 
-    list.results[[1]]$epsilon
-  plot.positions(z.new, b.new, alpha=1)
+  for (i in 1:(length(lambda.values)-1)) {
+    b.new <- list.results[[i]]$b
+    z.new <- array(list.results[[i]]$b, dim=c(dim(list.results[[i]]$b), K)) + 
+      list.results[[i]]$epsilon
+    plot.positions(z.new, b.new, alpha=1.5)
+  }
   dev.off()
-
-  
 }
 
 
