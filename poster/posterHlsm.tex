@@ -225,7 +225,7 @@ correlations is challenging.
     We include a LASSO penalty on the log-likelihood:
     \begin{align*}
     & \sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk} + (1-y_{ijk})\ln (1-\sigma_{ijk})} \\
-    & +\lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1
+    & +\lambda\sum_i \sum_k \norm{\epsilon_{ik}}_2
     \end{align*}
   where $z_{ik} = b_i + \epsilon_{ik}$ for initialization points, $b_i$
 % To fit these models, three methods were tested on the following likelihood:
@@ -263,19 +263,33 @@ correlations is challenging.
 %	RESULTS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Results}
+\begin{block}{Model's Advantages}
 
-\begin{figure}[h!]
-   \centering
-   \includegraphics[width=20in]{../R/plot_objective.png} % requires the graphicx package
-   \caption{Objective function for different values of $\lambda$}
-   \label{fig:obj_fun}
-\end{figure}
+Our model has the additional inclusion of a hierarchy on the latent variables:
+\[
+z_{ik} = b_i + \epsilon_{ik}
+\]
+
+each node has a separate latent position to explain its ties within a
+single layer of the multigraph, but these multiple positions are all
+tied together by a single ``base'' position for that node $b_i$, and a
+layer-specific perturbation, $\epsilon_{ik}$.
+
+This allows two major advantages. One is graph-wise regularization
+with a group lasso penalty, allowing entire redundant layers to be
+removed for meaningful dimensionality reduction. Second,
+regularization allows a manual tuning between layouts that are
+expressive, and those that are comparable, solving the difficult
+problem of visual comparability.
+
+\end{block}
+
+\begin{block}{Results for Proximal Gradient Descent}
 
 \begin{figure}[h!]
    \centering
    \includegraphics[width=19in]{../R/plot_positions.png} % requires the graphicx package
-   \caption{Initial and final positions using $\lambda=1$}
+   \caption{Initial and final positions using different values for $\lambda$}
    \label{fig:positions}
 \end{figure}
 
@@ -297,26 +311,7 @@ correlations is challenging.
 %	MATHEMATICAL SECTION
 %----------------------------------------------------------------------------------------
 
-%\begin{block}{Model's Advantages}
 
-%Our model has the additional inclusion of a hierarchy on the latent variables:
-%\[
-%z_{ik} = b_i + \epsilon_{ik}
-%\]
-%
-%each node has a separate latent position to explain its ties within a
-%single layer of the multigraph, but these multiple positions are all
-%tied together by a single ``base'' position for that node $b_i$, and a
-%layer-specific perturbation, $\epsilon_{ik}$.
-%
-%This allows two major advantages. One is graph-wise regularization
-%with a group lasso penalty, allowing entire redundant layers to be
-%removed for meaningful dimensionality reduction. Second,
-%regularization allows a manual tuning between layouts that are
-%expressive, and those that are comparable, solving the difficult
-%problem of visual comparability.
-%
-%\end{block}
 
 %----------------------------------------------------------------------------------------
 
@@ -394,10 +389,10 @@ refining an HLSM fit, given a good starting point.
 
  \begin{block}{References}
 
- \nocite{*} % Insert publications even if they are not cited in the poster
- \small{\bibliographystyle{unsrt}
- \bibliography{sample}\vspace{0.75in}}
-
+ %\nocite{*} % Insert publications even if they are not cited in the poster
+ %\small{\bibliographystyle{unsrt}
+ %\bibliography{sample}\vspace{0.75in}}
+\footnotesize
 Hoff, Peter D., Adrian E. Raftery, and Mark S. Handcock. \textit{Latent space approaches to social network analysis.} Journal of the american Statistical association 97.460 (2002): 1090-1098.\\
 %\\
 Salter-Townshend, Michael, and Tyler H. McCormick. \textit{Latent space models for multiview network data}. Technical Report 622, Department of Statistics, University of Washington, 2013.\\
@@ -417,15 +412,15 @@ Loewi, A., \textit{Parent-Teacher Relationships and Student Outcomes}, 2017
 
 %\setbeamercolor{block title}{fg=red,bg=white} % Change the block title color
 
-\begin{block}{Acknowledgements}
+% \begin{block}{Acknowledgements}
 
-  {\small\rmfamily{
-      The authors would like to thank the Network Analysis group in the
-      Department of Statistics and Data Science for their invitation to
-      present, and the helpful feedback they contributed.
-      }}
+%   {\small\rmfamily{
+%       The authors would like to thank the Network Analysis group in the
+%       Department of Statistics and Data Science for their invitation to
+%       present, and the helpful feedback they contributed.
+%       }}
 
-\end{block}
+% \end{block}
 
 %----------------------------------------------------------------------------------------
 %	CONTACT INFORMATION
