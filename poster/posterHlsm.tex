@@ -73,13 +73,25 @@
   \textsuperscript{2}Engineering \& Public Policy,
   %Carnegie Mellon University;
   \textsuperscript{3}Statistics \& Data Science,
-    \textsuperscript{3}Machine Learning
-
+    \textsuperscript{4}Machine Learning
 } % Institution(s)
 
-%----------------------------------------------------------------------------------------
+% ----------------------------------------------------------------------------------------
 
 \begin{document}
+
+\newcommand\curly[1]{\left\{#1\right\}}
+\newcommand\brac[1]{\left[#1\right]}
+\newcommand\paren[1]{\left(#1\right)}
+\newcommand\abs[1]{\left|#1\right|}
+\newcommand\norm[1]{\left\|#1\right\|}
+\newcommand\ang[1]{\left\langle#1\right\rangle}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\bone}{\mathbf{1}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\logitinv}{\textrm{logit}^{-1}}
 
 \addtobeamertemplate{block end}{}{\vspace*{2ex}} % White space under blocks
 \addtobeamertemplate{block alerted end}{}{\vspace*{2ex}} % White space under highlighted (alert) blocks
@@ -115,12 +127,29 @@
 
 \begin{block}{Introduction}
 
-\textbf{Problem:} 
-Multigraphs are a complex, but naturally occurring, and highly valuable, form for data. While several recent papers attest to an agreement that models for multigraphs are valuable, these models all have several important problems when it comes to using them in one key area -- Social Network Analysis (SNA). Social science and network analysis in particular rely heavily on intuitive and interpretable models, which becomes an increasingly large problem as the data they analyze becomes increasingly complex. Here, we present a model that solves several of the major problems of interpretability, while retaining rigorous statistical underpinnings.
+  \textbf{Multigraphs:}
+  ``Parallel'' network models sharing identical nodes but different
+  edges connecting nodes, used to model data where
+  actors (nodes) maintain varying types of relationships.\\
+  \textbf{Social Network Analysis (SNA)}, where nodes represent
+  individual people and edges represent differing relationships, such
+  as friendship, professional colleague, or facebook connected, for
+  example.\\
+  \textbf{Problem:} Social science and network analysis rely
+  on intuitive and interpretable models.  Interpreting a graph with
+  many nodes and differing, but related edges, is challenging.
+  \begin{figure}
+    \centering
+    \includegraphics{complexMultigraph.png}
+  \end{figure}
+  \textbf{Solution:} Using a LASSO penalty, we aim to collapse
+  sufficiently similar graphs subject to a tuning parameter.
 \end{block}
 
-\begin{block}{Data}
-The motivating data for this problem comes from a recently conducted study at a charter school in West Baltimore. The study collected, among other sources, a five-layer valued network between the approximately eighty employees of the school. These layers were comprised of the answers questions in the following areas:
+\begin{block}{Employee Relationships Data}
+  Recently conducted study at a charter school in West Baltimore\\
+  Collecteda five-layer valued network between the
+  approximately eighty employees of the school:
   \begin{itemize}
   \item Frequency of interaction
   \item Discussing Academics
@@ -128,17 +157,9 @@ The motivating data for this problem comes from a recently conducted study at a 
   \item Social interaction
   \item Professionally Helpful Relationship
   \end{itemize}
-While empirically these layers are found to have very high correlations, modeling them in a way that demonstrates those correlations is challenging.
-\end{block}
-
-\begin{block}{Goals}
-An ideal model would solve the following problems:
-
-  \begin{enumerate}
-  \item Comparable layouts
-  \item Layer-wise dimensionality reduction
-  \item Manually tunable between comparable and expressive
-  \end{enumerate}
+While empirically these layers are found to have very high
+correlations, modeling them in a way that demonstrates those
+correlations is challenging.
 \end{block}
 
 
@@ -160,19 +181,31 @@ An ideal model would solve the following problems:
 %	MATERIALS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Model}
+  \begin{block}{Latent Space Projection}
+    \begin{itemize}
+    \item Map nodes, $i\mapsto z_i\in\R^n$ where proximity,
+    $\norm{z_i-z_j}_2=d_{ij}<1$, indicates nodes are connected (and not
+    connected otherwise)
+    \item Makes reciprocity ($j\rightarrow i\Rightarrow i\rightarrow j$) and
+    transitivity ($i\rightarrow j, j\rightarrow k\Rightarrow
+    i\rightarrow k$) probable
+  \item Given $\sigma_{ij} = \P(Y_{ij}=1|z_i,z_j) = \logitinv\paren{\alpha + \norm{z_i-z_j}_2^2}$
+    where $Y_{ij}=1$ indicates $i,j$ are connected in the data, find $z$
+  \item Likelihood:
+    \[\prod_{i<j} \sigma_{ij}^{y_{ij}}(1- \sigma_{ij})^{1-y_{ij}}\]
+  \end{itemize}
 
-The model is based on the widely used Latent Space Model (LSM) for social networks. This model has the following form:
+% The model is based on the widely used Latent Space Model (LSM) for social networks. This model has the following form:
 
-\[
-\prod_k \prod_{ij} \sigma_{ijk}^{y_{ijk}}(1- \sigma_{ijk})^{1-y_{ijk}}
-\]
+% \[
+% \prod_k \prod_{i<j} \sigma_{ijk}^{y_{ijk}}(1- \sigma_{ijk})^{1-y_{ijk}}
+% \]
 
-\[
-\sigma_{ijk} = \text{logit}^{-1}(\alpha_k - d(z_{ik}, z_{jk}))
-\]
+% \[
+% \sigma_{ijk} = \text{logit}^{-1}(\alpha_k - d(z_{ik}, z_{jk}))
+% \]
 
-The original model has two simple elements: one, a binomial likelihood for the edges, making for easy and stable inference. And two, an edge probability based on the distance of the two node's latent variables, $z_i, z_j$. The farther apart these variables are, the less likely an edge is. The original model uses the observed edges to infer possible latent positions for the nodes that satisfy these relationships.
+% The original model has two simple elements: one, a binomial likelihood for the edges, making for easy and stable inference. And two, an edge probability based on the distance of the two node's latent variables, $z_i, z_j$. The farther apart these variables are, the less likely an edge is. The original model uses the observed edges to infer possible latent positions for the nodes that satisfy these relationships.
 
 \end{block}
 
@@ -186,22 +219,28 @@ The original model has two simple elements: one, a binomial likelihood for the e
 %	METHODS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Methods}
+  \begin{block}{Hierarchical Models}
 
-To fit these models, three methods were tested on the following likelihood:
+    \textbf{Goal:} Collapse similar networks\\
+    We include a group-wise LASSO penalty on the log-likelihood:
+    \[\sum_k\sum_{i<j} \brac{y_{ijk} \ln \sigma_{ijk}
+        + (1-y_{ijk})\ln (1-\sigma_{ijk})} +
+    \lambda\sum_i \sum_k \norm{\epsilon_{ik}}_1\]
+  where $z_{ik} = b_i + \epsilon_{ik}$ for initialization points, $b_i$
+% To fit these models, three methods were tested on the following likelihood:
 
-\[
-\prod_k \prod_{ij} \sigma_{ijk}^{y_{ijk}}(1- \sigma_{ijk})^{1-y_{ijk}} + \lambda\sum_i \sum_k |\epsilon_{ik}|
-\]
+% \[
+% \prod_k \prod_{ij} \sigma_{ijk}^{y_{ijk}}(1- \sigma_{ijk})^{1-y_{ijk}} + \lambda\sum_i \sum_k |\epsilon_{ik}|
+% \]
 
-
+\textbf{Optimization Approaches:}
 \begin{enumerate}
 \item Proximal Gradient Descent
-\item Coordinate-Wise Optimization
-\item Hamiltonian Monte Carlo methods (for comparison)
+\item Coordinate-Wise Optimization (pending)
+\item Hamiltonian Monte Carlo methods
 \end{enumerate}
 
-The first was used as a natural approach to the lasso penalized problem, the second was used to prevent the model from ``spinning'' during inference, and the third is the typical way in which these models were fit, used for combarability.
+%The first was used as a natural approach to the lasso penalized problem, the second was used to prevent the model from ``spinning'' during inference, and the third is the typical way in which these models were fit, used for combarability.
 
 \end{block}
 
@@ -219,7 +258,7 @@ The first was used as a natural approach to the lasso penalized problem, the sec
 
 Convex methods have valuable contributions for fitting complex Latent Space Models, and their extensions
 
-\end{alertblock} 
+\end{alertblock}
 
 %----------------------------------------------------------------------------------------
 
@@ -239,9 +278,17 @@ Our model has the additional inclusion of a hierarchy on the latent variables:
 z_{ik} = b_i + \epsilon_{ik}
 \]
 
-each node has a separate latent position to explain its ties within a single layer of the multigraph, but these multiple positions are all tied together by a single ``base'' position for that node $b_i$, and a layer-specific perturbation, $\epsilon_{ik}$.
+each node has a separate latent position to explain its ties within a
+single layer of the multigraph, but these multiple positions are all
+tied together by a single ``base'' position for that node $b_i$, and a
+layer-specific perturbation, $\epsilon_{ik}$.
 
-This allows two major advantages. One is graph-wise regularization with a group lasso penalty, allowing entire redundant layers to be removed for meaningful dimensionality reduction. Second, regularization allows a manual tuning between layouts that are expressive, and those that are comparable, solving the difficult problem of visual comparability.
+This allows two major advantages. One is graph-wise regularization
+with a group lasso penalty, allowing entire redundant layers to be
+removed for meaningful dimensionality reduction. Second,
+regularization allows a manual tuning between layouts that are
+expressive, and those that are comparable, solving the difficult
+problem of visual comparability.
 
 \end{block}
 
@@ -258,25 +305,26 @@ This allows two major advantages. One is graph-wise regularization with a group 
 \begin{block}{Results}
 
 \begin{figure}
-%\includegraphics[width=0.8\linewidth]{placeholder.jpg}
+\includegraphics[width=0.8\linewidth]{error_daisy}
 \caption{Figure caption}
 \end{figure}
 
-Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non porttitor. Sed a massa dolor, id ornare enim:
+% Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non
+% porttitor. Sed a massa dolor, id ornare enim:
 
-\begin{table}
-\vspace{2ex}
-\begin{tabular}{l l l}
-\toprule
-\textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
-\midrule
-Treatment 1 & 0.0003262 & 0.562 \\
-Treatment 2 & 0.0015681 & 0.910 \\
-Treatment 3 & 0.0009271 & 0.296 \\
-\bottomrule
-\end{tabular}
-\caption{Table caption}
-\end{table}
+% \begin{table}
+% \vspace{2ex}
+% \begin{tabular}{l l l}
+% \toprule
+% \textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
+% \midrule
+% Treatment 1 & 0.0003262 & 0.562 \\
+% Treatment 2 & 0.0015681 & 0.910 \\
+% Treatment 3 & 0.0009271 & 0.296 \\
+% \bottomrule
+% \end{tabular}
+% \caption{Table caption}
+% \end{table}
 
 \end{block}
 
@@ -292,12 +340,21 @@ Treatment 3 & 0.0009271 & 0.296 \\
 
 \begin{column}{\onecolwid} % The third column
 
-\begin{block}{A Simple Test}
-\begin{figure}
-\centering
-\includegraphics{error_daisy}
-\caption{A Stylized Multigraph}
-\end{figure}
+  \begin{block}{Challenges}
+
+    \begin{itemize}
+    \item Negative log-likelihood is not convex in the positions\\
+      \textbf{Fix:} We started from various random initializations
+    \item Distances between positions will yield same likelihood under
+      translations and rotation\\
+      \textbf{Fix:} Fit each layer of the hierarchy separately then
+      use linear transformations to align each to initialize the model
+    \end{itemize}
+% \begin{figure}
+% \centering
+% \includegraphics{error_daisy}
+% \caption{A Stylized Multigraph}
+% \end{figure}
 
 \end{block}
 
@@ -307,7 +364,7 @@ Treatment 3 & 0.0009271 & 0.296 \\
 
 %\begin{block}{Paths}
 %
-% \textbf{Weeks gestation:} 
+% \textbf{Weeks gestation:}
 %
 %\end{block}
 
@@ -318,7 +375,8 @@ Treatment 3 & 0.0009271 & 0.296 \\
 
 \begin{block}{Conclusion}
 
-We found that proximal gradient methods are an effective tool for refining an HLSM fit, given a good starting point.
+We found that proximal gradient methods are an effective tool for
+refining an HLSM fit, given a good starting point.
 
 
 \end{block}
@@ -335,13 +393,13 @@ We found that proximal gradient methods are an effective tool for refining an HL
  \bibliography{sample}\vspace{0.75in}}
 
 Hoff, Peter D., Adrian E. Raftery, and Mark S. Handcock. \textit{Latent space approaches to social network analysis.} Journal of the american Statistical association 97.460 (2002): 1090-1098.\\
-\\
+%\\
 Salter-Townshend, Michael, and Tyler H. McCormick. \textit{Latent space models for multiview network data}. Technical Report 622, Department of Statistics, University of Washington, 2013.\\
-\\
+%\\
 Salter-Townshend. M, \textit{Personal communication}, 2017\\
-\\
+%\\
 Bob Carpenter, Andrew Gelman, Matthew D. Hoffman, Daniel Lee, Ben Goodrich, Michael Betancourt, Marcus Brubaker, Jiqiang Guo, Peter Li, and Allen Riddell. \textit{Stan: A probabilistic programming language}. Journal of Statistical Software 76(1). DOI 10.18637/jss.v076.i01, 2017\\
-\\
+%\\
 Loewi, A., \textit{Parent-Teacher Relationships and Student Outcomes}, 2017
 
 
@@ -355,11 +413,11 @@ Loewi, A., \textit{Parent-Teacher Relationships and Student Outcomes}, 2017
 
 \begin{block}{Acknowledgements}
 
-  \small{\rmfamily{
+  {\small\rmfamily{
       The authors would like to thank the Network Analysis group in the
-      Department of Statistics and Data Science for their invitation to 
+      Department of Statistics and Data Science for their invitation to
       present, and the helpful feedback they contributed.
-      }} \\
+      }}
 
 \end{block}
 
@@ -392,6 +450,6 @@ Loewi, A., \textit{Parent-Teacher Relationships and Student Outcomes}, 2017
 
 \end{columns} % End of all the columns in the poster
 
-\end{frame} % End of the enclosing frame
+\end{frame}  % End of the enclosing frame
 
 \end{document}
