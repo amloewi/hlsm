@@ -141,6 +141,7 @@
   \begin{figure}
     \centering
     \includegraphics{complexMultigraph.png}
+    \caption{(Source: Salter-Townshend, Michael, and Tyler H. McCormick)}
   \end{figure}
   \textbf{Solution:} Using a LASSO penalty, we aim to collapse
   sufficiently similar graphs subject to a tuning parameter.
@@ -191,8 +192,7 @@ correlations is challenging.
     i\rightarrow k$) probable
   \item Given $\sigma_{ij} = \P(Y_{ij}=1|z_i,z_j) = \logitinv\paren{\alpha + \norm{z_i-z_j}_2^2}$
     where $Y_{ij}=1$ indicates $i,j$ are connected in the data, find $z$
-  \item Likelihood:
-    \[\prod_{i<j} \sigma_{ij}^{y_{ij}}(1- \sigma_{ij})^{1-y_{ij}}\]
+  \item Likelihood: $\prod_{i<j} \sigma_{ij}^{y_{ij}}(1- \sigma_{ij})^{1-y_{ij}}$
   \end{itemize}
 
 % The model is based on the widely used Latent Space Model (LSM) for social networks. This model has the following form:
@@ -254,11 +254,16 @@ correlations is challenging.
 %	IMPORTANT RESULT
 %----------------------------------------------------------------------------------------
 
-\begin{alertblock}{Takeaway}
+%\begin{alertblock}{Takeaway}
+%Convex methods have valuable contributions for fitting complex Latent Space Models, and their extensions
+%\end{alertblock}
 
-Convex methods have valuable contributions for fitting complex Latent Space Models, and their extensions
-
-\end{alertblock}
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=20in]{../R/plot_objective.png} % requires the graphicx package
+   \caption{Objective function for different values of $\lambda$}
+   \label{fig:example}
+\end{figure}
 
 %----------------------------------------------------------------------------------------
 
@@ -388,7 +393,7 @@ refining an HLSM fit, given a good starting point.
 
  \begin{block}{References}
 
- \nocite{*} % Insert publications even if they are not cited in the poster
+ %\nocite{*} % Insert publications even if they are not cited in the poster
  \small{\bibliographystyle{unsrt}
  \bibliography{sample}\vspace{0.75in}}
 
