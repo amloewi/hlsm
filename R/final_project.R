@@ -367,7 +367,7 @@ run.opt.wrapper <- function(){
           legend.justification=c(1,1)) + ylab('Log Obj Function') + 
     xlab('iteration')
   
-  png('plot_objective.png', res=300, width=9, height=3, unit="in")
+  png('plot_objective.png', res=300, width=5, height=3, unit="in")
   print(g1)
   dev.off()
   
