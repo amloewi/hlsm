@@ -1,3 +1,4 @@
+
 \documentclass{article}
 
 % if you need to pass options to natbib, use, e.g.:
@@ -29,7 +30,7 @@
 
 \usepackage{amssymb, amsmath}
 
-\title{Hierarchical Latent Space Models}
+\title{Hierarchical Latent Space Models\\for Multiplex Social Network Analysis}
 
 % The \author macro works with any number of authors. There are two
 % commands used to separate the names and addresses of multiple
@@ -86,38 +87,52 @@
 
 Testing citations \cite{10.2307/2290079}, \cite{kang2007,RSSB:RSSB12027}, \cite{hoff-2002, gollini-2016, salter-townshend2017}.
 
+\subsection{The Curious Case of SNA}
+Social network analysis (SNA) is a complex, and inherently interdisciplinary field. It takes the already complex fields of psychology and sociology, and focuses on the most interdependent processes in these disciplines. This then creates systems so complicated that sophisticated statistical models are necessary to make any sense of them. While this complexity makes SNA an exciting intersection, effectively spanning these two disparate approaches is exceptionally difficult. As a result, while it attracts a great deal of attention, many important problems in SNA are under-studied, simply because of the small number of people who are trained to deal with both the substance, and methods, of the field.
 
-Social network analysis (SNA) is a very strange field, in a number of ways. it is inherently interdisciplinary, even its name indicating that it emphasizes both sophisticated statistical machinery, and also much more qualitative elements. While this is an exciting intersection, spanning both of these such disparate approaches is exceptionally difficult. As a result many important problems in SNA are under-studied, simply because of the small number of people who think about the problems it considers, in their full depth.
+One of these problems is that of modeling multigraphs. Multigraphs, also called multiview networks, can be thought of as either a single graph with multiple edge types, or as multiple networks over the same set of nodes. Data of this kind is not uncommon, at either large or small scales. Twitter has Following relationships, as well as Retweets, and Likes, each of which can be thought of as simply one layer within the full relationship between two nodes. In small scales, surveys for networks very rarely ask about a single type of relationship, and many of the most famous network data sets have multiple relationships (such as Trust, Friendship, and Respect, in Samson's monk data). Despite the existence of data of this form for decades, the strange nature and inherent difficulty of this data has led to an extremely small number of ways to model it, all of which have serious shortcomings. The models from statistics tend to ignore the problems of the practitioner, and the practitioners rarely have the training to develop their own methods.
 
-One of these problems is that of modeling multigraphs. Multigraphs, also called multiview networks, can be thought of as either a single graph with multiple edge types, or as multiple networks over the same set of nodes. Data of this kind is not uncommon, at either large or small scales. Twitter has Following relationships, as well as Retweets, and Likes, each of which can be thought of as simply one layer within the full relationship between two nodes. In small scales, surveys for networks very rarely ask about a single type of relationship, and many of the most famous network data sets have multiple relationships (such as Trust, Friendship, and Respect, in Samson's monk data). Despite the existence of data of this form for decades, the strange nature and inherent difficulty of this data has led to an extremely small number of ways to model it.
+\subsection{The Practical Difficulties of Multigraphs}
+In particular, practitioners have two immediate problems when dealing with multigraphs, both of which are consequences of the inherent complexity of the data. 
+\subsubsection{Visualization}
+The first problem is that multigraphs are too complex to easily visualize, and visualization has always been a cornerstone of network analysis. In particular, the difficulty comes in comparing the many layers of data (i.e. the graphs formed by the different edge types). Because two layers have the same set of nodes, comparing them requires the nodes to be in similar positions for the two layouts. However, graph layout algorithms are designed to pay attention only to the connectivity in a graph, and find the node positions that best reflect that connectivity -- if the node positions are fixed, all of the meaningful structure in a layer may be obscured. To define the problems in terms of its extremes, there is a trade-off in terms of comparability (fixed nodes) and expressiveness (free nodes). A useful multigraph model would be able to tune explicitly between these two extremes.
 
-In designing a model however, the complexity of the data requires a perspective on what aspect of the network is most important. The model considered here was inspired initially by a very practical problem. A particular data set had five layers, and the goal was to compare visualizations of the five separate layers, to gain an intuition for similarities in the networks (visualization has long been a cornerstone of SNA, and graph layout algorithms is a substantial field unto itself). However, even if it has the same set of nodes, a graph with different sets of edges may be laid out completely differently -- incomparably -- from a graph with a different set of edges. The other approach, to immediately solve this problem of incomparable node placement, is to fix all of the positions a priori. However it has also long been known that doing so is the least informative visualization possible, as the very point of layout algorithms is to drive placement as a function of connectivity. This inspired the thought that perhaps a model could trade off these two extremes -- allowing just enough flexibility that the layout of a single layer could be both informative, and also compared meaningfully with the other layers in a graph.
+\subsubsection{Dimensionality}
+The second problem is that multigraphs may be unnecessarily complex. Empirically, there are often high degrees of correlation between the layers in a multigraph, and the smaller the number of graphs, the easier analysis becomes. These two observations combine to suggest another useful property of a new model -- the ability to remove redundant layers. While existing models often take the data and make it even more complicated, that runs counter to the needs of an applied social network analyst.
 
 \section{Problem Statement}
+Motivated by these problems, we propose a model with the following three objectives:
 
-\subsection{The Likelihood function}
+\begin{enumerate}
+\item Use current methods from statistical SNA to model multigraphs
+\item Model the layers of the multigraph in a way that can tune for comparability
+\item Allow the model to remove redundant layers
+\end{enumerate}
 
-The Binomial likelihood equation of the HLSM is:
+A model with all of these qualities, which we term the Hierarchical Latent Space Model, can be described in the following way:
+
+\subsection{The Likelihood Function}
+Using the canonical Latent Space Model \cite{hoff-2002} as a starting point, we model a set of conditionally independent binary dyads. 
+
+The existence of each of these dyads is a function of an intercept, a set of covariates (omitted here for clarity), and the distance between the latent ``position'' variables $z$ of the two nodes in the dyad. The goal of the model will be to estimate these positions. An optimal set of variables would place positions close together for nodes with an observed edge, and vice versa.
+
+\[
+\eta_{ijk} = \alpha_k - \|z_{ik} - z_{jk}\|_2^2 %=  \alpha_k - \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2
+\]
+
+The indices $i$ and $j$ are over the nodes; the index $k$ refers to the different layers in the multigraph. Because the edges are binary, we use the inverse logit $\sigma$ to transform $\eta$, but it should be observed that for real-valued edges, other link functions could be easily substituted.
+
+\[
+\sigma(\eta_{ijk}) = \frac{1}{1+\exp(-\eta_{ijk})} \in [0, 1]
+\]
+
+All together, the unpenalized likelihood of the HLSM thus takes the form of a binomial:
 
 \begin{align*}
   L &= \prod_k \prod_{i}\prod_{j<i} \sigma(\eta_{ijk})^{y_{ijk}}(1-\sigma(\eta_{ijk}))^{1-y_{ijk}}
 \end{align*}
 
-where,
-
-\[
-\eta_{ijk} = \alpha_k - \|z_{ik} - z_{jk}\|^2 =  \alpha_k - \|b_i + \epsilon_{ik} - b_j - \epsilon_{jk}\|^2
-\]
-
-\[
-z_{ik} = b_i + \epsilon_{ik}
-\]
-
-\[
-\sigma(\eta_{ijk}) = \frac{1}{1+\exp(-\eta_{ijk})}
-\]
-
-Then, the log likelihood is
+and the log likelihood is
 
 \begin{align*}
   \ell 	&= \sum_k \sum_{i} \sum_{j < i} {y_{ijk}} \ln \sigma(\eta_{ijk}) + (1-y_{ijk})\ln(1- \sigma(\eta_{ijk})) \\
@@ -127,17 +142,39 @@ Then, the log likelihood is
  	& = \sum_k \sum_{i} \sum_{j < i} (y_{ijk}-1)\eta_{ijk} - \ln (1+\exp(-\eta_{ijk}))
 \end{align*}
 
+\subsection{Regularization}
+
+While the notation $z$ for the latent variables is consistent with the literature, and somewhat more intuitive, our contribution comes from a reparameterization of the model, where
+
+\[
+z_{ik} = b_i + \epsilon_{ik}
+\]
+
+This parameterization takes an explicit mid-point between the two most recently published papers on this problem. One \cite{salter-townsend} fits the layers independently, and allows correlations between them; another \cite{} treats all of the layers simultaneously, as part of a single complex object. Our model allows not only for similar behaviors to both of these extremes, but additionally allows the user to tune between them manually.
+
+Our model starts with a ``base'' position $b_i$ for each node, which is the hierarchical layer in the model. It then adds a layer-specific perturbation $\epsilon_{ik}$. The behavior of the model then depends entirely on the regularization placed on the $\epsilon$'s. When there is none, each layer is fit independently. When there is an arbitrarily large amount, the perturbations are all driven to zero, and all $k$ layers are represented identically by the base parameters $b$. With intermediate values however, the user can find the point between these two extremes that allows for the graphs to be distinct, but also renders them sufficiently similar to be comparable, by not allowing the perturbations to stray too far from their shared base position.
+
+Furthermore, with the use of a group lasso penalty applied to all of the perturbations within a single layer $k$, the model itself will perform graph-wise dimensionality reduction. This is far more valuable to the practitioner than an element-wise sparse solution, which would still require them to consider all of the many layers in their multigraph. %This leads to the following penalized negative log likelihood, that we will attempt to optimize: 
+
+%\begin{align*}
+% 	\ell = - \sum_k \sum_{i} \sum_{j < i} (y_{ijk}-1)\eta_{ijk} + \ln (1+\exp(-\eta_{ijk})) + \lambda \sum_k \|\epsilon_k\|_2
+%\end{align*}
+
+%\subsection{Derivations}
+
+
+
 \subsection{Optimization Problem}
 
-Finally, our complete objective function is to minimize the sum between the negative log likelihood and a lasso penalty on the deviations $\epsilon_{ik}$.
+Together these two elements form our optimization problem, which is to minimize the sum of the negative log likelihood and a lasso penalty on the deviations $\epsilon_{ik}$.
 
 \begin{align*}
-\min_{\epsilon, b} \sum_k \sum_{i} \sum_{j < i} [ (1 - y_{ijk})\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \sum_i \| \epsilon_{i,k}\|
+\min_{\epsilon, b} \sum_k \sum_{i} \sum_{j < i} [ (1 - y_{ijk})\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \| \epsilon_{k}\|_2
 \end{align*}
 
-where $\|.\|$ represents the L2 norm. Since this is not differentiable, we could use proximal gradient descent. If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
+where $\epsilon_k$ represents all of the perturbations for layer $k$. Since this objective is not differentiable, we have several options, but the clear first choice is to use proximal gradient descent. %If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
 
-\subsection{Derivation of the gradients}
+\subsection{Derivation of the Gradients}
 
 We define our decision variables as: $\{b_i\}$ $\forall~i$ and $\{\epsilon_{ik}\}$ $\forall~i,k$.
 
