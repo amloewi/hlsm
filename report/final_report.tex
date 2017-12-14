@@ -81,12 +81,12 @@
 \maketitle
 
 \begin{abstract}
-  abstract...
+
 \end{abstract}
 
 \section{Introduction}
 
-Testing citations \cite{10.2307/2290079}, \cite{kang2007,RSSB:RSSB12027}, \cite{hoff-2002, gollini-2016, salter-townshend2017}.
+%Testing citations \cite{10.2307/2290079}, \cite{kang2007,RSSB:RSSB12027}, \cite{Hoff2002, gollini-2016, salter-townshend2017}.
 
 \subsection{The Curious Case of SNA}
 Social network analysis (SNA) is a complex, and inherently interdisciplinary field. It takes the already complex fields of psychology and sociology, and focuses on the most interdependent processes in these disciplines. This then creates systems so complicated that sophisticated statistical models are necessary to make any sense of them. While this complexity makes SNA an exciting intersection, effectively spanning these two disparate approaches is exceptionally difficult. As a result, while it attracts a great deal of attention, many important problems in SNA are under-studied, simply because of the small number of people who are trained to deal with both the substance, and methods, of the field.
@@ -101,6 +101,9 @@ The first problem is that multigraphs are too complex to easily visualize, and v
 \subsubsection{Dimensionality}
 The second problem is that multigraphs may be unnecessarily complex. Empirically, there are often high degrees of correlation between the layers in a multigraph, and the smaller the number of graphs, the easier analysis becomes. These two observations combine to suggest another useful property of a new model -- the ability to remove redundant layers. While existing models often take the data and make it even more complicated, that runs counter to the needs of an applied social network analyst.
 
+\subsection{Previous Work}
+\cite{Amer2017, Friedman2008, Friedman2010, Gollini2017, Qin, Salter-townshend2013, Vincent, Wu2008}
+
 \section{The Model}
 \subsection{Problem Statement}
 Motivated by these problems, we propose a model with the following three objectives:
@@ -114,7 +117,7 @@ Motivated by these problems, we propose a model with the following three objecti
 A model with all of these qualities, which we term the Hierarchical Latent Space Model, can be described in the following way:
 
 \subsection{The Likelihood Function}
-Using the canonical Latent Space Model \cite{hoff-2002} as a starting point, we model a set of conditionally independent binary dyads. 
+Using the canonical Latent Space Model \cite{Hoff2002} as a starting point, we model a set of conditionally independent binary dyads. 
 
 The existence of each of these dyads is a function of an intercept, a set of covariates (omitted here for clarity), and the distance between the latent ``position'' variables $z$ of the two nodes in the dyad. The goal of the model will be to estimate these positions. An optimal set of variables would place positions close together for nodes with an observed edge, and vice versa.
 
@@ -218,7 +221,7 @@ Then, the gradients of the $\eta_{ijk}$ are:
 
 The proximal operator for the penalty term using the L2 norm\footnotemark~ is:
 
-\footnotetext{According to the results on Homework 3}
+\footnotetext{Using the results from Homework 3}
 
 \[
 \text{prox}_{\|.\|, t}(\epsilon_{i,k}) = 
@@ -239,7 +242,7 @@ Therefore, let $\beta$ be the vector with all parameters $\epsilon$ and $b$. The
 \]
 
 \subsection{Non-Convexity and Initialization}
-The original Latent Space Model is known to be non-convex in the latent positions $z$ \cite{hoff}, and our model is no different. This issue is typically approached by using MCMC samplers \cite{hoff, stan} which are capable of exploring non-convex spaces, however these are known to have issues as well. Using them on this problem proved not only to take far more time, but also to have substantially worse results. We restrict our discussion to the non-Bayesian approaches taken.
+The original Latent Space Model is known to be non-convex in the latent positions $z$ \cite{Hoff2002}, and our model is no different. This issue is typically approached by using MCMC samplers \cite{Hoff2002, Carpenter2017} which are capable of exploring non-convex spaces, however these are known to have issues as well. Using them on this problem proved not only to take far more time, but also to have substantially worse results. We restrict our discussion to the non-Bayesian approaches taken.
 
 As we use methods designed for convex problems, we start by using a careful initialization of our procedure. This attempts to begin the algorithm close to a global minimum of the objective, so that when we do descend the likelihood, we descend a good one, knowing that local minima exist. This initialization was composed of several steps.
 \\
@@ -249,11 +252,9 @@ As we use methods designed for convex problems, we start by using a careful init
 \item Transform the layer estimates to minimize their distance from the base estimate
 \end{enumerate}
 
-The third step in this procedure was initially done with a Procrustes transform \cite{hoff}, as is used in Bayesian estimation of Latent Space Models. This transform is used because proposal graphs in a sampling procedure can produce a graph with many different unimportant variations, as the likelihood is invariant to translation, rotation, scaling, and flipping. The Procrustes transform is thus used to remove these transformations, while keeping the variations that are of importance to the likelihood. However this transform minimizes the overall distance between \textit{all} pairs of points in two shapes, and in this problem, we require something slightly different. The goal here is to minimize only distances between positions that correspond to the same node -- this is the property that minimizes the $\epsilon$'s, and makes the embeddings comparable.
+The third step in this procedure was initially done with a Procrustes transform \cite{Hoff2002}, as is used in Bayesian estimation of Latent Space Models. This transform is used because proposal graphs in a sampling procedure can produce a graph with many different unimportant variations, as the likelihood is invariant to translation, rotation, scaling, and flipping. The Procrustes transform is thus used to remove these transformations, while keeping the variations that are of importance to the likelihood. However this transform minimizes the overall distance between \textit{all} pairs of points in two shapes, and in this problem, we require something slightly different. The goal here is to minimize only distances between positions that correspond to the same node -- this is the property that minimizes the $\epsilon$'s, and makes the embeddings comparable.
 
 To solve this problem we developed and propose the Anticrustean transformation. A closed form solution, should one exist, has not been found, but a simple implementation combines line searches over the several classes of transforms to which the likelihood is invariant. Together, these steps produce a good initial estimate of all of the models parameters, which are used as starting points in the proximal gradient procedure. 
-
-
 
 %\begin{algorithmic}
 %\If {$i\geq maxval$}
@@ -274,12 +275,16 @@ To solve this problem we developed and propose the Anticrustean transformation. 
 
 \section{Discussion}
 
-% \lipsum[5]
+
 
 
 \section{Conclusion}
 
-\lipsum[6]
+Despite not being a convex problem, a combination of convex methods and a good heuristic starting point have been shown to efficiently fit this novel class of models. In addition, they have demonstrated all of the properties for which they were intended, and several others additionally. As demonstrated, HLSMs are capable of producing comparable graph layouts for the layers of a multigraph, and are also capable of performing layer-wise dimensionality reduction in order to meaningfully simplify this complex form of data.
+
+They are also valuable for refining the layouts determined by current Latent Space Model implementations, as can been seen in the differences between the initializations, and the final estimates. While it is possible that many likelihoods are feasible from a numerical point of view, this further convex optimization is valuable in finding solutions that are meaningful to human interpreters. Furthermore, our fitting procedure was found to converge to a good solution far faster than the HMC implementation with which we compared it.
+
+Having demonstrated the basic feasibility, effectiveness, and utility, of HLSMs, the next steps will be to push its limits on different kinds of graphs, and different numbers of layers. Several different guests at our poster session mentioned additional problems, including in medical domains, and the interpretability of deep neural nets, to which our method might be able to contribute. We look forward to exploring these additional problem spaces.
 
 \bibliography{hlsm.bib}
 
