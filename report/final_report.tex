@@ -81,12 +81,11 @@
 \maketitle
 
 \begin{abstract}
-
+An extension of Latent Space Models is developed, for parsimoniously fitting multigraph data. The major advantage of the model is that it allows for interpretable visualization of multigraphs, a necessary but difficult task in social network analysis and many other fields including medical diagnostics, and deep learning. The model is fit using a group LASSO penalty that both increases interpretability, and also solves a second important problem by allowing for graph-wise dimensionality reduction of this complicated form of data.%, by zero-ing out redundant layers of the multigraph. 
 \end{abstract}
 
-\section{Introduction}
 
-%Testing citations \cite{10.2307/2290079}, \cite{kang2007,RSSB:RSSB12027}, \cite{Hoff2002, gollini-2016, salter-townshend2017}.
+\section{Introduction}
 
 \subsection{The Curious Case of SNA}
 Social network analysis (SNA) is a complex, and inherently interdisciplinary field. It takes the already complex fields of psychology and sociology, and focuses on the most interdependent processes in these disciplines. This then creates systems so complicated that sophisticated statistical models are necessary to make any sense of them. While this complexity makes SNA an exciting intersection, effectively spanning these two disparate approaches is exceptionally difficult. As a result, while it attracts a great deal of attention, many important problems in SNA are under-studied, simply because of the small number of people who are trained to deal with both the substance, and methods, of the field.
@@ -102,7 +101,11 @@ The first problem is that multigraphs are too complex to easily visualize, and v
 The second problem is that multigraphs may be unnecessarily complex. Empirically, there are often high degrees of correlation between the layers in a multigraph, and the smaller the number of graphs, the easier analysis becomes. These two observations combine to suggest another useful property of a new model -- the ability to remove redundant layers. While existing models often take the data and make it even more complicated, that runs counter to the needs of an applied social network analyst.
 
 \subsection{Previous Work}
-\cite{Amer2017, Friedman2008, Friedman2010, Gollini2017, Qin, Salter-townshend2013, Vincent, Wu2008}
+% \cite{Amer2017, Friedman2008, Friedman2010, Gollini2017, Qin, Salter-townshend2013, Vincent, Wu2008, Yuan2006}
+
+Our model combines several methods that have proven to be exceptionally valuable -- Latent Space Models, \cite{Hoff2002}, the LASSO estimator, \cite{Friedman2008}, and in particular the group LASSO \cite{Yuan2006}. The substantial amount of work that has been done on them provides many different possible approaches to designing, and fitting, our own model. Efficient optimization procedures, often employing coordinate or block-coordinate optimization, exist for fitting the LASSO to linear models, \cite{Friedman2008}, to generalized linear models \cite{Friedman2010}, with the element-wise, group, and combined, sparse group LASSO, \cite{Vincent, Qin, Wu2008}, and more. This year already, two different papers have been published that attempt to use Latent Space ideas to model multigraphs -- however, our approach has substantial advantages over both of them, in part by focussing on problems these models are not actually attempting to solve. One approach takes the extreme of modeling the multigraph as a single object, which only makes visualization more difficult \cite{Gollini2017}. The other treats each layer as independent, and allows correlations between them, which does not solve the comparability problem, or that of dimensionality reduction \cite{Salter-townshend2013}. Furthermore, that model is described as ``much too flexible'' but the authors themselves, which may be because it suffers from an identifiability issue. Allowing correlations between layers means that an edge may exist either because its positions are close, or because the positions in a correlated layer are close. While clearly expressive, this ambiguity is not a desirable quality in social science.
+
+
 
 \section{The Model}
 \subsection{Problem Statement}
@@ -270,7 +273,7 @@ To solve this problem we developed and propose the Anticrustean transformation. 
 
 \section{Results}
 
-\lipsum[4]
+
 
 
 \section{Discussion}
