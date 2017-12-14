@@ -27,6 +27,7 @@
 \usepackage{microtype}      % microtypography
 
 \usepackage{lipsum}
+\usepackage{algpseudocode}
 
 \usepackage{amssymb, amsmath}
 
@@ -100,7 +101,8 @@ The first problem is that multigraphs are too complex to easily visualize, and v
 \subsubsection{Dimensionality}
 The second problem is that multigraphs may be unnecessarily complex. Empirically, there are often high degrees of correlation between the layers in a multigraph, and the smaller the number of graphs, the easier analysis becomes. These two observations combine to suggest another useful property of a new model -- the ability to remove redundant layers. While existing models often take the data and make it even more complicated, that runs counter to the needs of an applied social network analyst.
 
-\section{Problem Statement}
+\section{The Model}
+\subsection{Problem Statement}
 Motivated by these problems, we propose a model with the following three objectives:
 
 \begin{enumerate}
@@ -163,8 +165,8 @@ Furthermore, with the use of a group lasso penalty applied to all of the perturb
 %\subsection{Derivations}
 
 
-
-\subsection{Optimization Problem}
+\section{Fitting}
+\subsection{The Optimization Problem}
 
 Together these two elements form our optimization problem, which is to minimize the sum of the negative log likelihood and a lasso penalty on the deviations $\epsilon_{ik}$.
 
@@ -212,7 +214,7 @@ Then, the gradients of the $\eta_{ijk}$ are:
 & \quad\quad +  \sum_{i > m} \left(y_{imk} -1 + \frac{\exp(-\eta_{ijk})}{1+\exp(-\eta_{mjk})}\right)(z_{ik} - z_{mk}) \bigg]
 \end{align*}
 
-\subsection{The proximal operator}
+\subsection{The Proximal Operator}
 
 The proximal operator for the penalty term using the L2 norm\footnotemark~ is:
 
@@ -236,6 +238,35 @@ Therefore, let $\beta$ be the vector with all parameters $\epsilon$ and $b$. The
 \beta^{+} = \text{prox}_{\|.\|, t}(\beta - t \nabla \ell(\beta))
 \]
 
+\subsection{Non-Convexity and Initialization}
+The original Latent Space Model is known to be non-convex in the latent positions $z$ \cite{hoff}, and our model is no different. This issue is typically approached by using MCMC samplers \cite{hoff, stan} which are capable of exploring non-convex spaces, however these are known to have issues as well. Using them on this problem proved not only to take far more time, but also to have substantially worse results. We restrict our discussion to the non-Bayesian approaches taken.
+
+As we use methods designed for convex problems, we start by using a careful initialization of our procedure. This attempts to begin the algorithm close to a global minimum of the objective, so that when we do descend the likelihood, we descend a good one, knowing that local minima exist. This initialization was composed of several steps.
+\\
+\begin{enumerate}
+\item Create a proposal `base' graph from $\hat{y}_{ij} =\sum_k y_{ijk} > 0$
+\item Fit a separate single-graph latent space model to each layer
+\item Transform the layer estimates to minimize their distance from the base estimate
+\end{enumerate}
+
+The third step in this procedure was initially done with a Procrustes transform \cite{hoff}, as is used in Bayesian estimation of Latent Space Models. This transform is used because proposal graphs in a sampling procedure can produce a graph with many different unimportant variations, as the likelihood is invariant to translation, rotation, scaling, and flipping. The Procrustes transform is thus used to remove these transformations, while keeping the variations that are of importance to the likelihood. However this transform minimizes the overall distance between \textit{all} pairs of points in two shapes, and in this problem, we require something slightly different. The goal here is to minimize only distances between positions that correspond to the same node -- this is the property that minimizes the $\epsilon$'s, and makes the embeddings comparable.
+
+To solve this problem we developed and propose the Anticrustean transformation. A closed form solution, should one exist, has not been found, but a simple implementation combines line searches over the several classes of transforms to which the likelihood is invariant. Together, these steps produce a good initial estimate of all of the models parameters, which are used as starting points in the proximal gradient procedure. 
+
+
+
+%\begin{algorithmic}
+%\If {$i\geq maxval$}
+%    \State $i\gets 0$
+%\Else
+%    \If {$i+k\leq maxval$}
+%        \State $i\gets i+k$
+%    \EndIf
+%\EndIf
+%\end{algorithmic}
+
+
+
 \section{Results}
 
 \lipsum[4]
@@ -243,12 +274,13 @@ Therefore, let $\beta$ be the vector with all parameters $\epsilon$ and $b$. The
 
 \section{Discussion}
 
-\lipsum[5]
+% \lipsum[5]
+
 
 \section{Conclusion}
 
 \lipsum[6]
 
-\bibliography{sample.bib}
+\bibliography{hlsm.bib}
 
 \end{document}
