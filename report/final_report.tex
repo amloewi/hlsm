@@ -31,6 +31,9 @@
 
 \usepackage{amssymb, amsmath}
 
+\usepackage{graphicx}
+\graphicspath{ {../R/} }
+
 \title{Hierarchical Latent Space Models\\for Multiplex Social Network Analysis}
 
 % The \author macro works with any number of authors. There are two
@@ -80,13 +83,13 @@
 
 \maketitle
 
-\begin{abstract}
-  abstract...
-\end{abstract}
+%\begin{abstract}
+%  abstract...
+%\end{abstract}
 
 \section{Introduction}
 
-Testing citations \cite{10.2307/2290079}, \cite{kang2007,RSSB:RSSB12027}, \cite{hoff-2002, gollini-2016, salter-townshend2017}.
+%Testing citations \cite{10.2307/2290079}, \cite{kang2007,RSSB:RSSB12027}, \cite{hoff-2002, gollini-2016, salter-townshend2017}.
 
 \subsection{The Curious Case of SNA}
 Social network analysis (SNA) is a complex, and inherently interdisciplinary field. It takes the already complex fields of psychology and sociology, and focuses on the most interdependent processes in these disciplines. This then creates systems so complicated that sophisticated statistical models are necessary to make any sense of them. While this complexity makes SNA an exciting intersection, effectively spanning these two disparate approaches is exceptionally difficult. As a result, while it attracts a great deal of attention, many important problems in SNA are under-studied, simply because of the small number of people who are trained to deal with both the substance, and methods, of the field.
@@ -152,7 +155,7 @@ While the notation $z$ for the latent variables is consistent with the literatur
 z_{ik} = b_i + \epsilon_{ik}
 \]
 
-This parameterization takes an explicit mid-point between the two most recently published papers on this problem. One \cite{salter-townsend} fits the layers independently, and allows correlations between them; another \cite{} treats all of the layers simultaneously, as part of a single complex object. Our model allows not only for similar behaviors to both of these extremes, but additionally allows the user to tune between them manually.
+This parameterization takes an explicit mid-point between the two most recently published papers on this problem. One fits the layers independently, and allows correlations between them \cite{salter-townshend2017}; another  treats all of the layers simultaneously, as part of a single complex object \cite{gollini-2016}. Our model allows not only for similar behaviors to both of these extremes, but additionally allows the user to tune between them manually.
 
 Our model starts with a ``base'' position $b_i$ for each node, which is the hierarchical layer in the model. It then adds a layer-specific perturbation $\epsilon_{ik}$. The behavior of the model then depends entirely on the regularization placed on the $\epsilon$'s. When there is none, each layer is fit independently. When there is an arbitrarily large amount, the perturbations are all driven to zero, and all $k$ layers are represented identically by the base parameters $b$. With intermediate values however, the user can find the point between these two extremes that allows for the graphs to be distinct, but also renders them sufficiently similar to be comparable, by not allowing the perturbations to stray too far from their shared base position.
 
@@ -168,17 +171,23 @@ Furthermore, with the use of a group lasso penalty applied to all of the perturb
 \section{Fitting}
 \subsection{The Optimization Problem}
 
-Together these two elements form our optimization problem, which is to minimize the sum of the negative log likelihood and a lasso penalty on the deviations $\epsilon_{ik}$.
+Together these two elements form our optimization problem, which is to minimize the sum of the negative log likelihood and a penalty on the deviations $\epsilon_{ik}$. We tested two approaches with respect to the penalty on the deviations $\epsilon_{ik}$. In the first model, we used the standard element-wise lasso, by penalizing the L1 norm of each deviation $\epsilon_{ik}$. This first model is represented by Equation \ref{eq:lasso}.
 
-\begin{align*}
+\begin{align} \label{eq:lasso}
+\min_{\epsilon, b} \sum_k \sum_{i} \sum_{j < i} [ (1 - y_{ijk})\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_{k,i} \| \epsilon_{ik}\|_1
+\end{align}
+
+In the second approach, we used a group lasso penalty on each layer $k$ thus encouraging sparsity over layers, instead of on each individual deviation $\epsilon_{ik}$. This approach is illustrated in Equation \ref{eq:group_lasso}.
+
+\begin{align} \label{eq:group_lasso}
 \min_{\epsilon, b} \sum_k \sum_{i} \sum_{j < i} [ (1 - y_{ijk})\eta_{ijk} +  \ln (1+\exp(\eta_{ijk})) ] + \lambda \sum_k \| \epsilon_{k}\|_2
-\end{align*}
+\end{align}
 
-where $\epsilon_k$ represents all of the perturbations for layer $k$. Since this objective is not differentiable, we have several options, but the clear first choice is to use proximal gradient descent. %If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
+Since both these objective functions are not differentiable, we have several options, but the clear first choice is to use proximal gradient descent. %If the gradients for the ML function derived above are correct, we can directly use the code we implemented in HW3 (problem 4) to implement the proximal operator for this problem.
 
 \subsection{Derivation of the Gradients}
 
-We define our decision variables as: $\{b_i\}$ $\forall~i$ and $\{\epsilon_{ik}\}$ $\forall~i,k$.
+%We define our decision variables as: $\{b_i\}$ $\forall~i$ and $\{\epsilon_{ik}\}$ $\forall~i,k$.
 
 Then, the gradients of the $\eta_{ijk}$ are:
 
@@ -216,30 +225,53 @@ Then, the gradients of the $\eta_{ijk}$ are:
 
 \subsection{The Proximal Operator}
 
+\subsubsection{Group lasso}
+
 The proximal operator for the penalty term using the L2 norm\footnotemark~ is:
 
 \footnotetext{According to the results on Homework 3}
 
 \[
-\text{prox}_{\|.\|, t}(\epsilon_{i,k}) = 
+\text{prox}_{\|.\|, \lambda t}(\epsilon_{k}) = 
 \begin{cases}
-\frac{\|\epsilon_{i,k}\| - \lambda t}{\|\epsilon_{i,k}\|}\epsilon_{i,k}, & \|\epsilon_{i,k}\| \ge \lambda t \\
-0, & \|\epsilon_{i,k}\| < \lambda t
+\frac{\|\epsilon_{k}\| - \lambda t}{\|\epsilon_{k}\|}\epsilon_{k}, & \|\epsilon_{k}\| \ge \lambda t \\
+0, & \|\epsilon_{k}\| < \lambda t
 \end{cases}
 \]
 
 \[
-\text{prox}_{\|.\|, t}(b_i) = b_i
+\text{prox}_{\|.\|, \lambda t}(b_i) = b_i
 \]
 
 Therefore, let $\beta$ be the vector with all parameters $\epsilon$ and $b$. The Proximal Gradient Descent method in this case is:
 
 \[
-\beta^{+} = \text{prox}_{\|.\|, t}(\beta - t \nabla \ell(\beta))
+\beta^{+} = \text{prox}_{\|.\|, \lambda t}(\beta - t \nabla \ell(\beta))
 \]
 
+\subsubsection{Standard lasso}
+
+The proximal operator for the penalty term using the L2 norm\footnotemark~ is:
+
+\footnotetext{According to the results on Homework 3}
+
+\[
+\text{prox}_{\|.\|_1, \lambda t}(\epsilon_{i, k}) = \text{sign}(\epsilon_{i, k})\max{(\epsilon_{i, k} - \lambda t, 0)}
+\]
+
+\[
+\text{prox}_{\|.\|_1, \lambda t}(b_i) = b_i
+\]
+
+Therefore, let $\beta$ be the vector with all parameters $\epsilon$ and $b$. The Proximal Gradient Descent method in this case is:
+
+\[
+\beta^{+} = \text{prox}_{\|.\|_1, t}(\beta - t \nabla \ell(\beta))
+\]
+
+
 \subsection{Non-Convexity and Initialization}
-The original Latent Space Model is known to be non-convex in the latent positions $z$ \cite{hoff}, and our model is no different. This issue is typically approached by using MCMC samplers \cite{hoff, stan} which are capable of exploring non-convex spaces, however these are known to have issues as well. Using them on this problem proved not only to take far more time, but also to have substantially worse results. We restrict our discussion to the non-Bayesian approaches taken.
+The original Latent Space Model is known to be non-convex in the latent positions $z$ \cite{hoff-2002}, and our model is no different. This issue is typically approached by using MCMC samplers \cite{hoff-2002, salter-townshend2017} which are capable of exploring non-convex spaces, however these are known to have issues as well. Using them on this problem proved not only to take far more time, but also to have substantially worse results. We restrict our discussion to the non-Bayesian approaches taken.
 
 As we use methods designed for convex problems, we start by using a careful initialization of our procedure. This attempts to begin the algorithm close to a global minimum of the objective, so that when we do descend the likelihood, we descend a good one, knowing that local minima exist. This initialization was composed of several steps.
 \\
@@ -249,7 +281,7 @@ As we use methods designed for convex problems, we start by using a careful init
 \item Transform the layer estimates to minimize their distance from the base estimate
 \end{enumerate}
 
-The third step in this procedure was initially done with a Procrustes transform \cite{hoff}, as is used in Bayesian estimation of Latent Space Models. This transform is used because proposal graphs in a sampling procedure can produce a graph with many different unimportant variations, as the likelihood is invariant to translation, rotation, scaling, and flipping. The Procrustes transform is thus used to remove these transformations, while keeping the variations that are of importance to the likelihood. However this transform minimizes the overall distance between \textit{all} pairs of points in two shapes, and in this problem, we require something slightly different. The goal here is to minimize only distances between positions that correspond to the same node -- this is the property that minimizes the $\epsilon$'s, and makes the embeddings comparable.
+The third step in this procedure was initially done with a Procrustes transform \cite{hoff-2002}, as is used in Bayesian estimation of Latent Space Models. This transform is used because proposal graphs in a sampling procedure can produce a graph with many different unimportant variations, as the likelihood is invariant to translation, rotation, scaling, and flipping. The Procrustes transform is thus used to remove these transformations, while keeping the variations that are of importance to the likelihood. However this transform minimizes the overall distance between \textit{all} pairs of points in two shapes, and in this problem, we require something slightly different. The goal here is to minimize only distances between positions that correspond to the same node -- this is the property that minimizes the $\epsilon$'s, and makes the embeddings comparable.
 
 To solve this problem we developed and propose the Anticrustean transformation. A closed form solution, should one exist, has not been found, but a simple implementation combines line searches over the several classes of transforms to which the likelihood is invariant. Together, these steps produce a good initial estimate of all of the models parameters, which are used as starting points in the proximal gradient procedure. 
 
@@ -269,11 +301,40 @@ To solve this problem we developed and propose the Anticrustean transformation. 
 
 \section{Results}
 
-\lipsum[4]
+To test our model, we simulate a toy data set consisting of a multigraph with $N=20$ vertices and $K=2$ layers. We initialize our optimization problem using the initialization procedure described in the previous section. We then run $3000$ iterations of the proximal gradient algorithm. Figures \ref{fig:obj_lasso} and \ref{fig:obj_group} show the improvement in the objective function value over the 3000 iterations for, respectively, the standard lasso and the group lasso approaches using different values for $\lambda$. We can observe that the function values appear to converge to a local minimum. In both approaches we used a fixed step size $t=10^{-3}$ in the proximal gradient algorithms.
 
 
-\section{Discussion}
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.8\textwidth]{plot_objective_individual} % requires the graphicx package
+   \caption{Value of the objective function for different values of $\lambda$ in the standard lasso approach. We ran 3000 iterations of the proximal gradient descent algorithm.}
+   \label{fig:obj_lasso}
+\end{figure}
 
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.8\textwidth]{plot_objective_group} % requires the graphicx package
+   \caption{Value of the objective function for different values of $\lambda$ in the group lasso approach. We ran 3000 iterations of the proximal gradient descent algorithm.}
+   \label{fig:obj_group}
+\end{figure}
+
+Figures \ref{fig:pos_lasso} and \ref{fig:pos_group} compare the optimal positions found by each of the models with the initial one. Black points represent the base positions $b_i$ and the red and green points (and lines) represent the two different layers of the graph. We can observe that as we increase the value of $\lambda$ deviations are more penalized and the optimal solution tends to be one where all layers collapse to a single graph. Additionally, we can also compare the resulting optimal positions between the two approached (standard lasso and group lasso). For $\lambda=1$ the two layers are significantly more distinct than the ones in the standard lasso case.
+
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.8\textwidth]{plot_positions_individual} % requires the graphicx package
+   \caption{Scatter plots showing the initial positions (top left plot) used in the optimization problem and the final ones for different values of $\lambda$ in the standard lasso approach. Black points represent the base positions $b_i$ and the red and green points (and lines) represent the two different layers of the graph. As the value of $\lambda$ increases deviations are more penalized and the optimal solution tends to be one where all layers collapse to a single graph.}
+   \label{fig:pos_lasso}
+\end{figure}
+
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.8\textwidth]{plot_positions_group} % requires the graphicx package
+   \caption{Scatter plots showing the initial positions (top left plot) used in the optimization problem and the final ones for different values of $\lambda$ in the group lasso approach. Black points represent the base positions $b_i$ and the red and green points (and lines) represent the two different layers of the graph. As the value of $\lambda$ increases deviations are more penalized and the optimal solution tends to be one where all layers collapse to a single graph. We can observe that for $\lambda=1$ the two layers are significantly more distinct than the ones in the standard lasso case.}
+   \label{fig:pos_group}
+\end{figure}
+
+%\section{Discussion}
 % \lipsum[5]
 
 
@@ -281,6 +342,6 @@ To solve this problem we developed and propose the Anticrustean transformation. 
 
 \lipsum[6]
 
-\bibliography{hlsm.bib}
+\bibliography{sample.bib}
 
 \end{document}
