@@ -287,17 +287,26 @@ update_beta <- function(b, epsilon, y, t, lambda, group.level=FALSE){
   return(beta.new)
 }
 
-run.optimization <- function(b, epsilon, y, lambda=1, t=1e-3, group.level=FALSE) {
-  
-  n.steps <- 3000
-  
-  #y <- dummy.y()
+run.optimization <- function(b, epsilon, y, lambda=1, t=1e-3, 
+                             group.level=FALSE, n.steps=3000) {
+  # Updates the value of the parameter array
+  #
+  # Args:
+  #     b:  numeric vector of dimension (n vs 2) with initial positions  
+  #         in 2-d of each node
+  #     epsilon:  numeric array of dimension (n vs 2 vs k) with initial
+  #               deviations in 2-d of from b for each node in each level
+  #     y: numeric array of dimension (n vs n vs k) with adjency matrix in each
+  #        level  
+  #     t: (scalar) step size
+  #     lambda: (scalar) weight of penalty term in optimization function
+  #     group.level: (logical) should we group penalties on position by level?
+  #     n.steps: (integer) number of iterations in the optimization loop
+  #               obs: we could change this to a stopping criteria, of the kind
+  #                    | f^(k) - f^(k-1) | < tolerance
   
   n <- dim(y)[1]
   K <- dim(y)[3]
-  
-  #b <- array(runif(2*n), dim=c(n, 2))
-  #epsilon <- array(runif(3*(2*n), -0.5, 0.5), dim=c(n, 2, K))
   
   obj.value <- rep(0, n.steps)
   
@@ -311,9 +320,11 @@ run.optimization <- function(b, epsilon, y, lambda=1, t=1e-3, group.level=FALSE)
     epsilon <- param[ , ,2:(K+1)]
   }
   
+  # plot objective function in standard output
   plot(1:n.steps, obj.value, type='l', xlab='step', 
        ylab='Objective Function')
   
+  # return list with results
   return(list(b=b, epsilon=epsilon, obj.value=obj.value))
 }
 
