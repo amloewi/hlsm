@@ -271,7 +271,13 @@ plot.lsm <- function(alpha, z, add=F, col="black", xlim=c(-2,2), ylim=c(-2,2)){
 }
 
 
-plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL){
+plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL,
+                           one.plot=TRUE){
+    
+    K <- dim(z)[2]
+    if(!one.plot)
+        par(mfrow=c(round((K+1)/2), 2))
+    
     # First, make sure the plot is big enough
     if(is.null(xlim))
         xlim <- range(c(z[,,1], b[,1]))
@@ -283,10 +289,13 @@ plot.positions <- function(z, b, alpha=NULL, xlim=NULL, ylim=NULL){
         alpha <- rep(alpha, dim(z)[2]+1)
     
     plot.lsm(alpha[1], b, add=F, col=1, xlim=xlim, ylim=ylim)
-    for(i in 1:dim(z)[3]){
-        plot.lsm(alpha[i+1], z[,i,], add=T, col=i+1)
+    for(i in 1:dim(z)[2]){
+        plot.lsm(alpha[i+1], z[,i,], add=one.plot, col=i+1,
+                 xlim=xlim, ylim=ylim)
         #plot.lsm(alpha[i+1], z[ , ,i], add=T, col=i+1)
     }
+    if(!one.plot)
+        par(mfrow=c(1,1))
 }
 
 plot.model <- function(m, alpha=NULL, which="max", xlim=NULL, ylim=NULL){
@@ -409,7 +418,7 @@ plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
 
 
 ##### FITTING #####
-two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 4e3,
+two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 2e4,
                                     "hlsm.stan", "two_ovals")
 plot.model(two.ovals.model)
 plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)

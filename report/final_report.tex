@@ -84,7 +84,7 @@
 \maketitle
 
 \begin{abstract}
-An extension of Latent Space Models is developed, for parsimoniously fitting multigraph data. The major advantage of the model is that it allows for interpretable visualization of multigraphs, a necessary but difficult task in social network analysis and many other fields including medical diagnostics, and deep learning. The model is fit using a group LASSO penalty that both increases interpretability, and also solves a second important problem by allowing for graph-wise dimensionality reduction of this complicated form of data.%, by zero-ing out redundant layers of the multigraph. 
+An extension of Latent Space Models is developed, for parsimoniously fitting multigraph data. The major advantage of the model is that it allows for interpretable visualization of multigraphs, a necessary but difficult task in social network analysis and many other fields including medical diagnostics, and deep learning. The model is fit using a group LASSO penalty that both increases interpretability, and also solves a second important problem by allowing for graph-wise dimensionality reduction of this complicated form of data. Results are demonstrated on a novel data set from a two year study.
 \end{abstract}
 
 \section{Introduction}
@@ -311,19 +311,19 @@ To solve this problem we developed and propose the Anticrustean transformation. 
 
 \section{Results}
 
-To test our model, we simulate a toy data set consisting of a multigraph with $N=20$ vertices and $K=2$ layers. We initialize our optimization problem using the initialization procedure described in the previous section. We then run $3000$ iterations of the proximal gradient algorithm. Figures \ref{fig:obj_lasso} and \ref{fig:obj_group} show the improvement in the objective function value over the 3000 iterations for, respectively, the standard lasso and the group lasso approaches using different values for $\lambda$. We can observe that the function values appear to converge to a local minimum. In both approaches we used a fixed step size $t=10^{-3}$ in the proximal gradient algorithms.
+To test our model, we first simulate a toy data set consisting of a multigraph with $N=20$ vertices and $K=2$ layers, followed by the real and novel data set that motivated this technique. We initialize our optimization problem using the initialization procedure described in the previous section. We then run $3000$ iterations of the proximal gradient algorithm. Figures \ref{fig:obj_lasso} and \ref{fig:obj_group} show the improvement in the objective function value over the 3000 iterations for, respectively, the standard lasso and the group lasso approaches using different values for $\lambda$. We can observe that the function values appear to converge to a local minimum. In both approaches we used a fixed step size $t=10^{-3}$ in the proximal gradient algorithms.
 
 
 \begin{figure}[h!]
    \centering
-   \includegraphics[width=0.8\textwidth]{plot_objective_individual} % requires the graphicx package
+   \includegraphics[width=0.4\textwidth]{plot_objective_individual} % requires the graphicx package
    \caption{Value of the objective function for different values of $\lambda$ in the standard lasso approach. We ran 3000 iterations of the proximal gradient descent algorithm.}
    \label{fig:obj_lasso}
 \end{figure}
 
 \begin{figure}[h!]
    \centering
-   \includegraphics[width=0.8\textwidth]{plot_objective_group} % requires the graphicx package
+   \includegraphics[width=0.4\textwidth]{plot_objective_group} % requires the graphicx package
    \caption{Value of the objective function for different values of $\lambda$ in the group lasso approach. We ran 3000 iterations of the proximal gradient descent algorithm.}
    \label{fig:obj_group}
 \end{figure}
@@ -332,18 +332,26 @@ Figures \ref{fig:pos_lasso} and \ref{fig:pos_group} compare the optimal position
 
 \begin{figure}[h!]
    \centering
-   \includegraphics[width=0.8\textwidth]{plot_positions_individual} % requires the graphicx package
+   \includegraphics[width=0.4\textwidth]{plot_positions_individual} % requires the graphicx package
    \caption{Scatter plots showing the initial positions (top left plot) used in the optimization problem and the final ones for different values of $\lambda$ in the standard lasso approach. Black points represent the base positions $b_i$ and the red and green points (and lines) represent the two different layers of the graph. As the value of $\lambda$ increases deviations are more penalized and the optimal solution tends to be one where all layers collapse to a single graph.}
    \label{fig:pos_lasso}
 \end{figure}
-
+%
 \begin{figure}[h!]
    \centering
-   \includegraphics[width=0.8\textwidth]{plot_positions_group} % requires the graphicx package
+   \includegraphics[width=0.4\textwidth]{plot_positions_group} % requires the graphicx package
    \caption{Scatter plots showing the initial positions (top left plot) used in the optimization problem and the final ones for different values of $\lambda$ in the group lasso approach. Black points represent the base positions $b_i$ and the red and green points (and lines) represent the two different layers of the graph. As the value of $\lambda$ increases deviations are more penalized and the optimal solution tends to be one where all layers collapse to a single graph. We can observe that for $\lambda=1$ the two layers are significantly more distinct than the ones in the standard lasso case.}
    \label{fig:pos_group}
 \end{figure}
 
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.6\textwidth]{six_gsa_graphs}
+	\caption{A Real-World Network of Teachers in West Baltimore}
+	\label{fig:gsa}
+\end{figure}
+
+In Figure \ref{fig:gsa}, we plot the results of our algorithm on a novel data set of teachers at a school in West Baltimore. As can be seen, the graphs are both highly visually comparable, while maintaining a substantial amount of expressiveness to demonstrate their individual structure. We believe this convincingly demonstrates the potential utility of our technique as a tool in social network analysis, and many other fields.
 
 \section{Conclusion}
 
@@ -352,6 +360,8 @@ Despite not being a convex problem, a combination of convex methods and a good h
 They are also valuable for refining the layouts determined by current Latent Space Model implementations, as can been seen in the differences between the initializations, and the final estimates. While it is possible that many likelihoods are feasible from a numerical point of view, this further convex optimization is valuable in finding solutions that are meaningful to human interpreters. Furthermore, our fitting procedure was found to converge to a good solution far faster than the HMC implementation with which we compared it.
 
 Having demonstrated the basic feasibility, effectiveness, and utility, of HLSMs, the next steps will be to push its limits on different kinds of graphs, and different numbers of layers. Several different guests at our poster session mentioned additional problems, including in medical domains, and the interpretability of deep neural nets, to which our method might be able to contribute. We look forward to exploring these additional problem spaces.
+
+\clearpage
 
 \bibliography{sample.bib}
 
