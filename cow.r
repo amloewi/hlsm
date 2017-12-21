@@ -2,6 +2,7 @@
 # REQUIRES FUNCTIONS IN hlsm_sim.R #
 ####################################
 
+
 invlogit <- function(x) 1/(1+exp(-x))
 L22 <- function(x) sum(x^2) 
 

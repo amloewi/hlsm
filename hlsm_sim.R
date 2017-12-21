@@ -1,5 +1,5 @@
 # This is where hlsm.stan is
-# setwd("~/Documents/Research/hlsm")
+setwd("~/Documents/Research/hlsm")
 
 
             ##### FUNCTIONS FOR GENERATING HLSM DATA #####
@@ -226,29 +226,60 @@ one.shot <- function(edges, init, sigma, iter, file, model_name){
 # (Functions to ...)
 ##### EXAMINE THE ESTIMATED VALUES #####
 
-unpack.hlsm.fit <- function(fit, N, K, which="max"){
+unpack.hlsm.fit <- function(fit, N, K, which="min"){
     # s <- summary(fit)$summary[,"mean"]
     draws <- as.matrix(fit)
     if(which=="max")
-        s <- draws[which.max(draws[,"lp__"]),]
+        s <- draws[which.max(draws[,"lp__"]),] # WORST
     if(which=="min")
-        s <- draws[which.min(draws[,"lp__"]),]
+        s <- draws[which.min(draws[,"lp__"]),] # BEST
     if(which=="mean")
         s <- colMeans(draws)
     if(which=="last")
         s <- draws[nrow(draws),]
     
-    params <- t(array(s, dim=c(K, 1+N+N*K))) # => one k-dim'nl param per line, CUTS lp__
-    return(list(alpha=params[1,],
-                b=params[2:(N+1),],
-                # => z[N,K,2], i.e. nodes, layers, x/y coords.
-                z=aperm(array(params[(N+2):(1+N+N*2),], # This is UGLY, but works
-                              dim=c(K,N,2)),            # ... MAYBE NOT, ASSHOLE
-                        c(2,1,3)))) 
+    # THE CRUDE BUT CORRECT APPROACH
+    alpha <- s[1:K]
+    s <- s[-(1:K)]
+    b. <- array(dim=c(N,2))
+    for(i in 1:N){
+        b.[i,1] <- s[i]
+        b.[i,2] <- s[i+N]
+    }
+    s <- s[-(1:(2*N))]
+    z <- array(dim=c(N,K,2))
+    for(k in 1:K){
+        z[,k,1] <- s[1:N]
+        s <- s[-(1:N)]
+    }
+    for(k in 1:K){
+        z[,k,2] <- s[1:N]
+        s <- s[-(1:N)]
+    }
+    
+    return(list(alpha=alpha,
+                b=b,
+                z=z))    
+    
+    # params <- t(array(s, dim=c(K, 1+N+N*K))) # => one k-dim'nl param per line, CUTS lp__
+    # return(list(alpha=params[1,],
+    #             b=params[2:(N+1),],
+    #             # => z[N,K,2], i.e. nodes, layers, x/y coords.
+    #             z=aperm(array(params[(N+2):(1+N+N*2),], # This is UGLY, but works
+    #                           dim=c(K,N,2)),            # ... MAYBE NOT, ASSHOLE
+    #                     c(2,1,3)))) 
 }
 
 # zhat <- unpack.hlsm.fit(fit, N, K)
 # plot.multigraph(zhat$z, alpha=.02)
+
+
+
+
+
+
+
+
 
 
 # Takes the parameters for an lsm, lays out a network as specified
@@ -306,14 +337,13 @@ plot.model <- function(m, alpha=NULL, which="max", xlim=NULL, ylim=NULL){
     K <- dim(x)[2]
     theta <- unpack.hlsm.fit(m$fit, N, K, which=which)
 
-    # apparently, this is fucked, so --     
-    z <- aperm(theta$z, c(1,3,2)) # will THIS fix it? STILL looks fucked
     b <- theta$b
     init <- m$init$b
     
     if(is.null(alpha))
         alpha <- theta$alpha
     plot.positions(z, b, alpha=alpha, xlim=xlim, ylim=ylim)
+    # why is b perfect?
     plot.lsm(alpha=1, z=init, col="blue", add=T)
 }
 
@@ -352,7 +382,7 @@ plot.errors <- function(z, b){
         z <- array(z, dim=c(dim(z),1))
         z <- aperm(z, c(1,3,2))    
     }
-    z <- aperm(z, c(1, 3, 2))
+    # z <- aperm(z, c(1, 3, 2))
     N <- dim(z)[1]
     K <- dim(z)[2]
     for(i in 1:N){
@@ -418,13 +448,17 @@ plot.positions(ovals.init()$z, ovals.init()$b, ovals.init()$alpha)
 
 
 ##### FITTING #####
-two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 2e4,
+two.ovals.model <- one.shot(two.ovals, ovals.init, .05, 4e4,
                                     "hlsm.stan", "two_ovals")
-plot.model(two.ovals.model)
+
+plot.model(two.ovals.model)#, alpha=.5) # still a problem with alpha? 
 plot.errors(two.ovals.model$theta$z, two.ovals.model$theta$b)
 
 
-# AND ALSO REVISIT UNPACK WHICH MIGHT BE ALL WRONG
+zhat <- unpack.hlsm.fit(two.ovals.model$fit, N, 2, which="max")
+plot.positions(zhat$z, zhat$b, .6) # zhat$alpha)
+plot.errors(zhat$z, zhat$b)
+
 
 
 # AND NOW WITH THE TRUE PARAMETERS
